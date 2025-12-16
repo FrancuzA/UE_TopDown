@@ -13,5 +13,19 @@ UCLASS()
 class UE_TOPDOWN_API AMainHUD : public AHUD
 {
 	GENERATED_BODY()
-	
+public:
+    AMainHUD();
+
+    virtual void BeginPlay() override;
+
+    UFUNCTION(BlueprintImplementableEvent, Category = "HUD")
+    void UpdateHealth(float CurrentHealth, float MaxHealth);
+
+    UFUNCTION(BlueprintImplementableEvent, Category = "HUD")
+    void UpdateStamina(float CurrentStamina, float MaxStamina);
+
+private:
+    UPROPERTY()
+    class ABasePlayerController* PlayerController;
+
 };

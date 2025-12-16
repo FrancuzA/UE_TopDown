@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "InteractionInterface.h"
 #include "Item.generated.h"
 
 UCLASS()
@@ -20,7 +21,15 @@ protected:
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class USceneComponent* SceneRoot;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UStaticMeshComponent* MeshComp;
+	// Implementacja interfejsu
+	virtual void Interact_Implementation(AActor* Interactor);
 
+	// Funkcja do podnoszenia
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Item")
+	void PickUp(ABasePlayerCharacter* ByCharacter);
+	virtual void PickUp_Implementation(ABasePlayerCharacter* ByCharacter);
 };

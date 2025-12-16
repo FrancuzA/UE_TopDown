@@ -4,8 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "BasePlayerCharacter.h"
+#include "InteractionInterface.h"
 #include "InteractionComponent.generated.h"
 
+class UKismetSystemLibrary;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UE_TOPDOWN_API UInteractionComponent : public UActorComponent
@@ -16,13 +19,19 @@ public:
 	// Sets default values for this component's properties
 	UInteractionComponent();
 
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	UPROPERTY(EditDefaultsOnly)
+	TArray<AActor*> IgnoreActors;
+
+	UPROPERTY()
+	float TraceSphereRadius = 10.f;
+
+	void TryInteract();
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-		
+	UFUNCTION()
+	void SphereTrace(FHitResult& SphereHit);	
 };

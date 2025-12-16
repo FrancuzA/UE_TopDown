@@ -13,7 +13,7 @@ UCLASS()
 class UE_TOPDOWN_API ABasePlayerController : public APlayerController
 {
 	GENERATED_BODY()
-	/*
+	
 public:
     virtual void SetupInputComponent() override;
 
@@ -37,6 +37,6 @@ private:
     void OnInteract();
     void OnAttack();
 
-    virtual void BeginPlay() override;*/
+    virtual void BeginPlay() override;
 
 };
