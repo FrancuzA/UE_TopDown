@@ -20,4 +20,7 @@ public:
 
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
     void Equip(AActor* Equipper);
+
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
+    void GetHit(FVector HitLocation);
 };

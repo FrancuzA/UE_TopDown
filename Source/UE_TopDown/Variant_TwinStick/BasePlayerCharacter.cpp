@@ -36,6 +36,7 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 
     Attributes = CreateDefaultSubobject<UAttributesComponent>(TEXT("Attributes"));
 
+    CurrentProjectileClass = ProjectileClass;
 }
 
 // Called when the game starts or when spawned
@@ -56,8 +57,9 @@ void ABasePlayerCharacter::BeginPlay()
 
     if (Attributes)
     {
+        Attributes->OnDeath.AddDynamic(this, &ABasePlayerCharacter::HandlePlayerDeath);
         Attributes->OnHealthChanged.AddDynamic(this, &ABasePlayerCharacter::OnHealthChanged);
-        Attributes->OnStaminaChanged.AddDynamic(this, &ABasePlayerCharacter::OnStaminaChanged);
+        Attributes->OnManaChanged.AddDynamic(this, &ABasePlayerCharacter::OnStaminaChanged);
         Attributes->OnDeath.AddDynamic(this, &ABasePlayerCharacter::OnDeath);
     }
 }
@@ -155,13 +157,42 @@ void ABasePlayerCharacter::Interact()
 
 void ABasePlayerCharacter::Attack()
 {
-    
-    Attributes->PayStamina(StaminaCost_Attack);
+    if (!Attributes || !CurrentProjectileClass) return;
 
-    if ( AttackMontage && GetMesh() && GetMesh()->GetAnimInstance())
+
+    // Sprawdź czy jest wystarczająca mana
+    if (Attributes->CanPayManaCost(ManaCost_Attack)) // Ta funkcja zostanie zmieniona w kolejnym kroku
     {
-        UE_LOG(LogTemp, Warning, TEXT("Wykonano atak"));
-        GetMesh()->GetAnimInstance()->Montage_Play(AttackMontage);
+        Attributes->PayMana(ManaCost_Attack); // Zostanie zmienione na PayMana
+
+        if (AttackMontage && GetMesh() && GetMesh()->GetAnimInstance())
+        {
+            GetMesh()->GetAnimInstance()->Montage_Play(AttackMontage);
+        }
+
+        // Strzelanie
+        FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 50);
+        FRotator SpawnRotation = GetControlRotation();
+
+        FActorSpawnParameters SpawnParams;
+        SpawnParams.Owner = this;
+        SpawnParams.Instigator = GetInstigator();
+
+        if (CurrentProjectileClass)
+        {
+            AProjectile* Projectile = GetWorld()->SpawnActor<AProjectile>(
+                CurrentProjectileClass, // Używaj aktualnej broni
+                SpawnLocation,
+                SpawnRotation,
+                SpawnParams
+            );
+
+            if (Projectile)
+            {
+                FVector LaunchDirection = SpawnRotation.Vector();
+                Projectile->FireInDirection(LaunchDirection);
+            }
+        }
     }
 }
 
@@ -183,4 +214,25 @@ FVector ABasePlayerCharacter::GetCameraLocation()
 FVector ABasePlayerCharacter::GetCameraForwardVector()
 {
     return ViewCamera ? ViewCamera->GetForwardVector() : FVector::ForwardVector;
+}
+
+void ABasePlayerCharacter::HandlePlayerDeath()
+{
+    // POPRAWNE WYŁĄCZENIE INPUTU
+    if (APlayerController* PC = Cast<APlayerController>(GetController()))
+    {
+        DisableInput(PC);
+    }
+
+    GetCharacterMovement()->DisableMovement();
+    GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+    // Spawnowanie ekranu końcowego
+    if (AGameOverScreen* GameOver = GetWorld()->SpawnActor<AGameOverScreen>(AGameOverScreen::StaticClass()))
+    {
+        if (Attributes)
+        {
+            GameOver->SetFinalScore(FMath::RoundToInt(Attributes->Score));
+        }
+    }
 }

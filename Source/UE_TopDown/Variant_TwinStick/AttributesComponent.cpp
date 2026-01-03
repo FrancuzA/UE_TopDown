@@ -6,9 +6,10 @@
 // Sets default values for this component's properties
 UAttributesComponent::UAttributesComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
-	Health = MaxHealth;
-	Stamina = MaxStamina;
+    PrimaryComponentTick.bCanEverTick = true;
+    Health = MaxHealth;
+    Mana = MaxMana;
+    Score = 0.0f;
 }
 
 
@@ -17,19 +18,18 @@ void UAttributesComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	Health = MaxHealth;
-	Stamina = MaxStamina;
+	Mana = MaxMana;
 }
 
 
 // Called every frame
 void UAttributesComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	if (bIsRegeneratingStamina && Stamina < MaxStamina)
-	{
-		float NewStamina = Stamina + (StaminaCost.StaminaRegenRate * DeltaTime);
-		SetStamina(FMath::Min(NewStamina, MaxStamina));
-	}
+    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+    if (bIsRegeneratingMana && Mana < MaxMana)
+    {
+        SetMana(Mana + (ManaCost.ManaRegenRate * DeltaTime));
+    }
 }
 
 void UAttributesComponent::SetHealth(float NewHealth)
@@ -53,27 +53,35 @@ void UAttributesComponent::ApplyDamage(float Damage)
     SetHealth(Health - Damage);
 }
 
-void UAttributesComponent::SetStamina(float NewStamina)
+void UAttributesComponent::SetMana(float NewMana)
 {
-    float OldStamina = Stamina;
-    Stamina = FMath::Clamp(NewStamina, 0.0f, MaxStamina);
+    float ClampedMana = FMath::Clamp(NewMana, 0.0f, MaxMana);
+    if (FMath::IsNearlyEqual(Mana, ClampedMana)) return;
 
-    if (Stamina != OldStamina)
-    {
-        OnStaminaChanged.Broadcast(Stamina, MaxStamina);
-    }
+    Mana = ClampedMana;
+    OnManaChanged.Broadcast(Mana, MaxMana);
 }
 
-void UAttributesComponent::PayStamina(float Cost)
+void UAttributesComponent::PayMana(float Cost)
 {
-    if (Cost > 0.0f)
-    {
-        SetStamina(Stamina - Cost);
-        bIsRegeneratingStamina = false;
+    if (Cost <= 0.0f || Mana < Cost) return;
 
-        // Restart regeneration after a short delay
-        FTimerHandle RegenerationTimer;
-        GetWorld()->GetTimerManager().SetTimer(RegenerationTimer, this, &UAttributesComponent::StartStaminaRegeneration, 1.0f, false);
-    }
+    SetMana(Mana - Cost);
+    StopManaRegeneration();
+
+    FTimerHandle RegenerationTimer;
+    GetWorld()->GetTimerManager().SetTimer(
+        RegenerationTimer,
+        this,
+        &UAttributesComponent::StartManaRegeneration,
+        1.0f,
+        false
+    );
+}
+
+void UAttributesComponent::AddScore(float Points)
+{
+    Score = FMath::Max(0.0f, Score + Points);
+    OnScoreChanged.Broadcast(Score);
 }
 

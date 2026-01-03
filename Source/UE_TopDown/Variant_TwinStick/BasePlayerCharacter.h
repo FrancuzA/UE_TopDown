@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputAction.h"
+#include "GameOverScreen.h"
 #include "InputMappingContext.h"
 #include "Animation/AnimMontage.h"
 #include "AttributesComponent.h"
@@ -45,11 +46,24 @@ public:
 
 	virtual void GetHit_Implementation(FVector HitLocation);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
-	float StaminaCost_Attack = 20.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mana")
+	float ManaCost_Attack = 20.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+	TSubclassOf<class AProjectile> ProjectileClass;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+	float ProjectileSpeed = 1000.0f;
+
 
 	UFUNCTION(BlueprintCallable)
 	void Attack();
+
+	UFUNCTION()
+	void HandlePlayerDeath();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	TSubclassOf<AProjectile> CurrentProjectileClass;
 
 protected:
 	// Called when the game starts or when spawned

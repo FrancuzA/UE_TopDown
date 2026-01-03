@@ -1,40 +1,49 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
-#include "Variant_TwinStick/Item.h"
+#include "Item.h"
 #include "Components/StaticMeshComponent.h"
 #include "BasePlayerCharacter.h"
+#include "AttributesComponent.h"
 
-// Sets default values
 AItem::AItem()
 {
-	PrimaryActorTick.bCanEverTick = false;
-	SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
-	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	MeshComp->SetupAttachment(SceneRoot);
-	SetRootComponent(SceneRoot);
+    PrimaryActorTick.bCanEverTick = false;
+    SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
+    MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+    MeshComp->SetupAttachment(SceneRoot);
+    SetRootComponent(SceneRoot);
 }
 
-// Called when the game starts or when spawned
 void AItem::BeginPlay()
 {
-	Super::BeginPlay();
-	
+    Super::BeginPlay();
 }
 
 void AItem::Interact_Implementation(AActor* Interactor)
 {
-	ABasePlayerCharacter* Player = Cast<ABasePlayerCharacter>(Interactor);
-	if (Player)
-	{
-		PickUp(Player);
-	}
+    if (ABasePlayerCharacter* Player = Cast<ABasePlayerCharacter>(Interactor))
+    {
+        PickUp(Player);
+    }
 }
 
 void AItem::PickUp_Implementation(ABasePlayerCharacter* ByCharacter)
 {
-	// Podstawowa implementacja - ukryj przedmiot
-	SetActorHiddenInGame(true);
-	//SetActorEnableCollision(false);
-}
+    if (!ByCharacter || !ByCharacter->Attributes) return;
 
+    switch (ItemType)
+    {
+    case EItemType::Health:
+        ByCharacter->Attributes->SetHealth(ByCharacter->Attributes->GetHealth() + HealthAmount);
+        break;
+    case EItemType::Mana:
+        ByCharacter->Attributes->SetMana(ByCharacter->Attributes->GetMana() + ManaAmount);
+        break;
+    case EItemType::Weapon:
+        if (WeaponClass)
+        {
+            ByCharacter->ProjectileClass = WeaponClass;
+        }
+        break;
+    }
+
+    Destroy(); // Natychmiastowe usunięcie przedmiotu
+}

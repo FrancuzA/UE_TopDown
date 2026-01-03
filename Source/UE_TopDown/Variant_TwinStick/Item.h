@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -7,29 +5,45 @@
 #include "InteractionInterface.h"
 #include "Item.generated.h"
 
-UCLASS()
-class UE_TOPDOWN_API AItem : public AActor
+UENUM(BlueprintType)
+enum class EItemType : uint8
 {
-	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
-	AItem();
+    Health,
+    Mana,
+    Weapon
+};
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+UCLASS()
+class UE_TOPDOWN_API AItem : public AActor, public IInteractionInterface
+{
+    GENERATED_BODY()
 
-public:	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	class USceneComponent* SceneRoot;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UStaticMeshComponent* MeshComp;
-	// Implementacja interfejsu
-	virtual void Interact_Implementation(AActor* Interactor);
+public:
+    AItem();
 
-	// Funkcja do podnoszenia
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Item")
-	void PickUp(ABasePlayerCharacter* ByCharacter);
-	virtual void PickUp_Implementation(ABasePlayerCharacter* ByCharacter);
+    virtual void BeginPlay() override;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    class USceneComponent* SceneRoot;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    UStaticMeshComponent* MeshComp;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item")
+    EItemType ItemType = EItemType::Health;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item")
+    float HealthAmount = 25.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item")
+    float ManaAmount = 30.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item")
+    TSubclassOf<class AProjectile> WeaponClass;
+
+    virtual void Interact_Implementation(AActor* Interactor) override;
+
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Item")
+    void PickUp(ABasePlayerCharacter* ByCharacter);
+    virtual void PickUp_Implementation(ABasePlayerCharacter* ByCharacter);
 };

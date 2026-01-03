@@ -8,17 +8,18 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDeathDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnAttributeChangedDelegate, float, CurrentValue, float, MaxValue);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnScoreChangedDelegate, float, CurrentScore);
 
 USTRUCT(BlueprintType)
-struct FStaminaCost
+struct FManaCost
 {
     GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
-    float StaminaRegenRate = 10.0f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mana")
+    float ManaRegenRate = 10.0f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
-    float StaminaCost_Attack = 20.0f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mana")
+    float ManaCost_Attack = 20.0f;
 };
 
 
@@ -45,20 +46,25 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attributes")
     float Health;
 
-    // Stamina
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
-    float MaxStamina = 100.0f;
+    // Mana
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mana")
+    float MaxMana = 100.0f;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stamina")
-    float Stamina;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mana")
+    float Mana;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
-    FStaminaCost StaminaCost;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mana")
+    FManaCost ManaCost;
 
-    bool bIsRegeneratingStamina = true;
+    bool bIsRegeneratingMana = true;
 
 public:	
-	
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Score")
+    float Score = 0.0f;
+
+    
+    UPROPERTY(BlueprintAssignable, Category = "Score")
+    FOnScoreChangedDelegate OnScoreChanged;
 
     // Health Functions
     UFUNCTION(BlueprintCallable, Category = "Attributes")
@@ -76,27 +82,30 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Attributes")
     bool IsAlive() const { return Health > 0.0f; }
 
+    UFUNCTION(BlueprintCallable, Category = "Score")
+    void AddScore(float Points);
+
     // Stamina Functions
-    UFUNCTION(BlueprintCallable, Category = "Stamina")
-    float GetStamina() const { return Stamina; }
+    UFUNCTION(BlueprintCallable, Category = "Mana")
+    float GetMana() const { return Mana; }
 
-    UFUNCTION(BlueprintCallable, Category = "Stamina")
-    float GetMaxStamina() const { return MaxStamina; }
+    UFUNCTION(BlueprintCallable, Category = "Mana")
+    float GetMaxMana() const { return MaxMana; }
 
-    UFUNCTION(BlueprintCallable, Category = "Stamina")
-    void SetStamina(float NewStamina);
+    UFUNCTION(BlueprintCallable, Category = "Mana")
+    void SetMana(float NewMana);
 
-    UFUNCTION(BlueprintCallable, Category = "Stamina")
-    bool CanPayStaminaCost(float Cost) const { return Stamina >= Cost; }
+    UFUNCTION(BlueprintCallable, Category = "Mana")
+    bool CanPayManaCost(float Cost) const { return Mana >= Cost; }
 
-    UFUNCTION(BlueprintCallable, Category = "Stamina")
-    void PayStamina(float Cost);
+    UFUNCTION(BlueprintCallable, Category = "Mana")
+    void PayMana(float Cost);
 
-    UFUNCTION(BlueprintCallable, Category = "Stamina")
-    void StartStaminaRegeneration() { bIsRegeneratingStamina = true; }
+    UFUNCTION(BlueprintCallable, Category = "Mana")
+    void StartManaRegeneration() { bIsRegeneratingMana = true; }
 
-    UFUNCTION(BlueprintCallable, Category = "Stamina")
-    void StopStaminaRegeneration() { bIsRegeneratingStamina = false; }
+    UFUNCTION(BlueprintCallable, Category = "Mana")
+    void StopManaRegeneration() { bIsRegeneratingMana = false; }
 
     // Delegates
     UPROPERTY(BlueprintAssignable, Category = "Attributes")
@@ -105,7 +114,7 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "Attributes")
     FOnAttributeChangedDelegate OnHealthChanged;
 
-    UPROPERTY(BlueprintAssignable, Category = "Stamina")
-    FOnAttributeChangedDelegate OnStaminaChanged;
+    UPROPERTY(BlueprintAssignable, Category = "Mana")
+    FOnAttributeChangedDelegate OnManaChanged;
 		
 };
