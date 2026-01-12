@@ -10,6 +10,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "BasePlayerController.h"
+#include "Projectile.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
