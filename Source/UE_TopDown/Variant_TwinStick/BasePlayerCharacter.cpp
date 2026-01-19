@@ -10,7 +10,10 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "BasePlayerController.h"
+#include "Projectile.h"
+#include "WaveManager.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ABasePlayerCharacter::ABasePlayerCharacter()
@@ -43,7 +46,6 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 void ABasePlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
     if (ABasePlayerController* PC = Cast<ABasePlayerController>(GetController()))
     {
         if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
@@ -59,8 +61,7 @@ void ABasePlayerCharacter::BeginPlay()
     {
         Attributes->OnDeath.AddDynamic(this, &ABasePlayerCharacter::HandlePlayerDeath);
         Attributes->OnHealthChanged.AddDynamic(this, &ABasePlayerCharacter::OnHealthChanged);
-        Attributes->OnManaChanged.AddDynamic(this, &ABasePlayerCharacter::OnStaminaChanged);
-        Attributes->OnDeath.AddDynamic(this, &ABasePlayerCharacter::OnDeath);
+        Attributes->OnManaChanged.AddDynamic(this, &ABasePlayerCharacter::OnManaChanged);
     }
 }
 
@@ -86,12 +87,10 @@ void ABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 void ABasePlayerCharacter::Look(const FInputActionValue& Value)
 {
-    /*FVector2D AxisValue = Value.Get<FVector2D>();
-    if (Controller)
-    {
-        AddControllerYawInput(AxisValue.X);
-        AddControllerPitchInput(-AxisValue.Y);
-    }*/
+    FVector2D LookAxisVector = Value.Get<FVector2D>();
+    AddControllerYawInput(LookAxisVector.X);
+    AddControllerPitchInput(LookAxisVector.Y);
+
 }
 
 void ABasePlayerCharacter::Move(const FInputActionValue& Value)
@@ -125,19 +124,18 @@ void ABasePlayerCharacter::OnHealthChanged(float CurrentHealth, float MaxHealth)
         PC->UpdateHealthBar(CurrentHealth, MaxHealth);
     }
 
-    // Update state if health is critical
     if (CurrentHealth <= 0.0f)
     {
       
     }
 }
 
-void ABasePlayerCharacter::OnStaminaChanged(float CurrentStamina, float MaxStamina)
+void ABasePlayerCharacter::OnManaChanged(float CurrentMana, float MaxMana)
 {
     ABasePlayerController* PC = Cast<ABasePlayerController>(GetController());
     if (PC)
     {
-        PC->UpdateStaminaBar(CurrentStamina, MaxStamina);
+        PC->UpdateManaBar(CurrentMana, MaxMana);
     }
 
 }
@@ -227,6 +225,17 @@ void ABasePlayerCharacter::HandlePlayerDeath()
     GetCharacterMovement()->DisableMovement();
     GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+
+    TArray<AActor*> FoundManagers;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWaveManager::StaticClass(), FoundManagers);
+    if (FoundManagers.Num() > 0)
+    {
+        AWaveManager* WaveManager = Cast<AWaveManager>(FoundManagers[0]);
+        if (WaveManager)
+        {
+            WaveManager->StopAllWaves();
+        }
+    }
     // Spawnowanie ekranu końcowego
     if (AGameOverScreen* GameOver = GetWorld()->SpawnActor<AGameOverScreen>(AGameOverScreen::StaticClass()))
     {
@@ -235,4 +244,8 @@ void ABasePlayerCharacter::HandlePlayerDeath()
             GameOver->SetFinalScore(FMath::RoundToInt(Attributes->Score));
         }
     }
+
+    InteractionComponent->Deactivate();
+    CameraBoom->Deactivate();
+    ViewCamera->Deactivate();
 }

@@ -24,7 +24,7 @@ public:
     void UpdateHealthBar(float CurrentHealth, float MaxHealth);
 
     UFUNCTION(BlueprintCallable, Category = "HUD")
-    void UpdateStaminaBar(float CurrentStamina, float MaxStamina);
+    void UpdateManaBar(float CurrentMana, float MaxMana);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")
     TSubclassOf<class UUserWidget> HUDWidgetClass;

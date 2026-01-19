@@ -48,4 +48,13 @@ protected:
     // Toggle fullscreen
     UFUNCTION()
     void OnFullscreenToggled(bool bIsChecked);
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+    UUserWidget* MainMenuWidget;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+    UWidget* OptionsPanel;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+    UWidget* MainMenuPanel;
 };
