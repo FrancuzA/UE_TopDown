@@ -11,6 +11,7 @@
 #include "AttributesComponent.h"
 #include "BasePlayerCharacter.generated.h"
 
+
 class UCameraComponent;
 class USpringArmComponent;
 class UInteractionComponent;

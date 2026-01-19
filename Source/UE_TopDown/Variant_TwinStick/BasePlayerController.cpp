@@ -36,31 +36,3 @@ void ABasePlayerController::UpdateManaBar(float CurrentMana, float MaxMana)
     // This will be implemented in Blueprint
 }
 
-
-void ABasePlayerController::SetupInputComponent()
-{
-    Super::SetupInputComponent();
-
-    InputComponent->BindAction("IA_Interact", IE_Pressed, this, &ABasePlayerController::OnInteract);
-    InputComponent->BindAction("IA_Attack", IE_Pressed, this, &ABasePlayerController::OnAttack);
-}
-
-void ABasePlayerController::OnInteract()
-{
-
-    ABasePlayerCharacter* PlayerCharacter = Cast<ABasePlayerCharacter>(GetPawn());
-    if (PlayerCharacter)
-    {
-        PlayerCharacter->Interact();
-    }
-}
-
-void ABasePlayerController::OnAttack()
-{
-    ABasePlayerCharacter* PlayerCharacter = Cast<ABasePlayerCharacter>(GetPawn());
-    if (PlayerCharacter)
-    {
-
-        PlayerCharacter->Attack();
-    }
-}
