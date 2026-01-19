@@ -105,7 +105,7 @@ private:
 	void OnHealthChanged(float CurrentHealth, float MaxHealth);
 
 	UFUNCTION()
-	void OnStaminaChanged(float CurrentStamina, float MaxStamina);
+	void OnManaChanged(float CurrentMana, float MaxMana);
 
 	UFUNCTION()
 	void OnDeath();

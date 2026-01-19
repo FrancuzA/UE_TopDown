@@ -4,6 +4,7 @@
 #include "Variant_TwinStick/BasePlayerController.h"
 #include "Blueprint/UserWidget.h"
 #include "BasePlayerCharacter.h"
+#include "Projectile.h" 
 #include "AttributesComponent.h"
 
 void ABasePlayerController::BeginPlay()
@@ -30,7 +31,7 @@ void ABasePlayerController::UpdateHealthBar(float CurrentHealth, float MaxHealth
     // This will be implemented in Blueprint
 }
 
-void ABasePlayerController::UpdateStaminaBar(float CurrentStamina, float MaxStamina)
+void ABasePlayerController::UpdateManaBar(float CurrentMana, float MaxMana)
 {
     // This will be implemented in Blueprint
 }
