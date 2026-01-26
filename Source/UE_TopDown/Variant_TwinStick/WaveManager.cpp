@@ -1,16 +1,17 @@
 #include "WaveManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 AWaveManager::AWaveManager()
 {
-    PrimaryActorTick.bCanEverTick = false; // Tick nie jest potrzebny
+    PrimaryActorTick.bCanEverTick = true;
 }
 
 void AWaveManager::BeginPlay()
 {
     Super::BeginPlay();
-    StartNextWave(); // Rozpocznij od pierwszej fali
+    StartWaveSystem();
 }
 
 void AWaveManager::Tick(float DeltaTime)
@@ -18,47 +19,88 @@ void AWaveManager::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
 }
 
-void AWaveManager::StartNextWave()
+void AWaveManager::StartWaveSystem()
 {
-    if (CurrentWaveIndex >= Waves.Num()) return;
+    if (bWaveInProgress || EnemyTypes.Num() == 0 || SpawnLocations.Num() == 0) return;
 
-    const FEnemyWave& CurrentWave = Waves[CurrentWaveIndex];
+    CurrentWave = 0;
+    EnemiesAlive = 0;
+    bWaveInProgress = true;
+
+    // Pierwsza fala po 3 sekundach
+    GetWorldTimerManager().SetTimer(WaveTimer, this, &AWaveManager::SpawnWave, 3.0f, false);
+}
+
+void AWaveManager::StopWaveSystem()
+{
+    GetWorldTimerManager().ClearTimer(WaveTimer);
+    GetWorldTimerManager().ClearTimer(SpawnTimer);
+    bWaveInProgress = false;
+}
+
+void AWaveManager::SpawnWave()
+{
+    if (!bWaveInProgress) return;
+
+    CurrentWave++;
+    int32 EnemyCount = CalculateEnemyCountForWave(CurrentWave);
+    FEnemyStats EnemyStats = CalculateEnemyStatsForWave(CurrentWave);
+
+    UE_LOG(LogTemp, Log, TEXT("Wave %d started - %d enemies"), CurrentWave, EnemyCount);
+
+    // Spawnowanie wrogów z opóźnieniem
     float SpawnDelay = 0.0f;
-
-    for (int32 i = 0; i < CurrentWave.EnemyCount; ++i)
+    for (int32 i = 0; i < EnemyCount; i++)
     {
-        // Losowy punkt spawnu
-        int32 RandomIndex = FMath::RandRange(0, SpawnLocations.Num() - 1);
-        FVector SpawnLocation = SpawnLocations[RandomIndex];
-
-        // Opóźnione spawnowanie wrogów
         FTimerHandle SingleSpawnTimer;
         GetWorldTimerManager().SetTimer(
             SingleSpawnTimer,
-            [this, CurrentWave, SpawnLocation]()
+            [this, EnemyStats]()
             {
-                SpawnEnemy(CurrentWave.EnemyClass, SpawnLocation);
+                TSubclassOf<AEnemy> EnemyClass = GetRandomEnemyTypeForWave(CurrentWave);
+                SpawnSingleEnemy(EnemyClass, EnemyStats);
             },
             SpawnDelay,
             false
         );
-
-        SpawnDelay += CurrentWave.SpawnInterval;
+        SpawnDelay += 0.8f; // 0.8s między wrogami
     }
 
-    CurrentWaveIndex++;
+    // Następna fala po zakończeniu obecnej + czas przerwy
+    GetWorldTimerManager().SetTimer(
+        WaveTimer,
+        this,
+        &AWaveManager::SpawnWave,
+        TimeBetweenWaves + (EnemyCount * 0.8f),
+        false
+    );
 }
 
-void AWaveManager::SpawnEnemy(TSubclassOf<AEnemy> EnemyClass, const FVector& Location)
+void AWaveManager::SpawnSingleEnemy(TSubclassOf<AEnemy> EnemyClass, const FEnemyStats& Stats)
 {
+    if (!EnemyClass || SpawnLocations.Num() == 0) return;
+
+    // Losowa lokalizacja na krawędzi mapy
+    FVector SpawnLocation = SpawnLocations[FMath::RandRange(0, SpawnLocations.Num() - 1)];
+
     FActorSpawnParameters SpawnParams;
     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-    AEnemy* NewEnemy = GetWorld()->SpawnActor<AEnemy>(EnemyClass, Location, FRotator::ZeroRotator, SpawnParams);
+    AEnemy* NewEnemy = GetWorld()->SpawnActor<AEnemy>(EnemyClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
     if (NewEnemy)
     {
+        // Modyfikacja statystyk wroga
+        NewEnemy->MaxHealth *= Stats.HealthMultiplier;
+        NewEnemy->CurrentHealth = NewEnemy->MaxHealth;
+        NewEnemy->DamageOnHit *= Stats.DamageMultiplier;
+
+        // Modyfikacja prędkości (tylko dla CharacterMovement)
+        if (NewEnemy->GetCharacterMovement())
+        {
+            NewEnemy->GetCharacterMovement()->MaxWalkSpeed *= Stats.SpeedMultiplier;
+        }
+
         EnemiesAlive++;
-        // Śledź zniszczenie wroga
         NewEnemy->OnDestroyed.AddDynamic(this, &AWaveManager::OnEnemyDestroyed);
     }
 }
@@ -66,45 +108,37 @@ void AWaveManager::SpawnEnemy(TSubclassOf<AEnemy> EnemyClass, const FVector& Loc
 void AWaveManager::OnEnemyDestroyed(AActor* DestroyedActor)
 {
     EnemiesAlive = FMath::Max(0, EnemiesAlive - 1);
-
-    // Jeśli nie ma wrogów i są kolejne fale
-    if (EnemiesAlive == 0 && CurrentWaveIndex < Waves.Num())
-    {
-        // Opóźnienie przed następną falą
-        GetWorldTimerManager().SetTimer(
-            WaveTimer,
-            this,
-            &AWaveManager::StartNextWave,
-            3.0f,
-            false
-        );
-    }
 }
 
-void AWaveManager::StopAllWaves()
+int32 AWaveManager::CalculateEnemyCountForWave(int32 WaveNumber) const
 {
-    GetWorldTimerManager().ClearTimer(WaveTimer);
-    // Zatrzymaj wszystkie aktywne timery spawnów
-    GetWorldTimerManager().ClearAllTimersForObject(this);
-    CurrentWaveIndex = Waves.Num(); // Zablokuj nowe fale
+    return BaseEnemyCount + FMath::FloorToInt((WaveNumber - 1) / WavesPerNewEnemyType * EnemyCountIncrement);
 }
 
-void AWaveManager::ResetWaves()
+FEnemyStats AWaveManager::CalculateEnemyStatsForWave(int32 WaveNumber) const
 {
-    if (!GetWorld()) return;
-    // Wyczyść wszystkie istniejące wrogowie
-    TArray<AActor*> AllEnemies;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AEnemy::StaticClass(), AllEnemies);
-    for (AActor* Enemy : AllEnemies)
+    FEnemyStats Stats;
+    Stats.HealthMultiplier = 1.0f + (WaveNumber - 1) * HealthScalePerWave;
+    Stats.DamageMultiplier = 1.0f + (WaveNumber - 1) * DamageScalePerWave;
+    Stats.SpeedMultiplier = 1.0f; // Stała prędkość dla balansu
+
+    // Dodatkowy boost dla późnych fal
+    if (WaveNumber > 10)
     {
-        Enemy->Destroy();
+        Stats.HealthMultiplier *= 1.5f;
+        Stats.DamageMultiplier *= 1.3f;
     }
 
-    // Zresetuj stan menadżera
-    CurrentWaveIndex = 0;
-    EnemiesAlive = 0;
-    GetWorldTimerManager().ClearAllTimersForObject(this);
+    return Stats;
+}
 
-    // Natychmiast rozpocznij od nowa
-    StartNextWave();
+TSubclassOf<AEnemy> AWaveManager::GetRandomEnemyTypeForWave(int32 WaveNumber) const
+{
+    if (EnemyTypes.Num() == 0) return nullptr;
+
+    // Liczba dostępnych typów wrogów dla danej fali
+    int32 AvailableTypes = FMath::Min(EnemyTypes.Num(), 1 + (WaveNumber - 1) / WavesPerNewEnemyType);
+    int32 RandomIndex = FMath::RandRange(0, AvailableTypes - 1);
+
+    return EnemyTypes[RandomIndex];
 }

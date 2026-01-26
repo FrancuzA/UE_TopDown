@@ -38,10 +38,6 @@ public:
     UFUNCTION(BlueprintCallable)
     float GetScoreValue() const { return ScoreValue; }
 
-protected:
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy")
-    EEnemyType EnemyType = EEnemyType::Grunt;
-
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
     float MaxHealth = 100.0f;
 
@@ -50,6 +46,10 @@ protected:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
     float DamageOnHit = 10.0f;
+
+protected:
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy")
+    EEnemyType EnemyType = EEnemyType::Grunt;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
     float AttackRange = 100.0f;

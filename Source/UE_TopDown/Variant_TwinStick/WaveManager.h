@@ -6,18 +6,18 @@
 #include "WaveManager.generated.h"
 
 USTRUCT(BlueprintType)
-struct FEnemyWave
+struct FEnemyStats
 {
     GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
-    TSubclassOf<AEnemy> EnemyClass;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+    float HealthMultiplier = 1.0f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
-    int32 EnemyCount = 5;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+    float DamageMultiplier = 1.0f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
-    float SpawnInterval = 2.0f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+    float SpeedMultiplier = 1.0f;
 };
 
 UCLASS()
@@ -32,29 +32,55 @@ public:
     virtual void Tick(float DeltaTime) override;
 
     UFUNCTION(BlueprintCallable)
-    void StartNextWave();
+    void StartWaveSystem();
 
     UFUNCTION(BlueprintCallable)
-    void StopAllWaves();
-
-    UFUNCTION(BlueprintCallable)
-    void ResetWaves();
+    void StopWaveSystem();
 
 protected:
+    // Konfiguracja trudności
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Difficulty")
+    TArray<TSubclassOf<AEnemy>> EnemyTypes; // Grunt -> Speedster -> Tank
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Difficulty")
+    int32 WavesPerNewEnemyType = 3; // Co 3 fale nowy typ wroga
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Difficulty")
+    int32 BaseEnemyCount = 5;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Difficulty")
+    float EnemyCountIncrement = 2.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Difficulty")
+    float HealthScalePerWave = 0.1f; // +10% HP co falę
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Difficulty")
+    float DamageScalePerWave = 0.05f; // +5% obrażeń co falę
+
+    // Spawn
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")
-    TArray<FVector> SpawnLocations;
+    TArray<FVector> SpawnLocations; // Punkty na krawędziach mapy
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Waves")
-    TArray<FEnemyWave> Waves;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")
+    float TimeBetweenWaves = 5.0f;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Waves")
-    int32 CurrentWaveIndex = 0;
+    // Stan
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+    int32 CurrentWave = 0;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawning")
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
     int32 EnemiesAlive = 0;
 
-    FTimerHandle WaveTimer;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+    bool bWaveInProgress = false;
 
-    void SpawnEnemy(TSubclassOf<AEnemy> EnemyClass, const FVector& Location);
+    FTimerHandle WaveTimer;
+    FTimerHandle SpawnTimer;
+
+    void SpawnWave();
+    void SpawnSingleEnemy(TSubclassOf<AEnemy> EnemyClass, const FEnemyStats& Stats);
     void OnEnemyDestroyed(AActor* DestroyedActor);
+    int32 CalculateEnemyCountForWave(int32 WaveNumber) const;
+    FEnemyStats CalculateEnemyStatsForWave(int32 WaveNumber) const;
+    TSubclassOf<AEnemy> GetRandomEnemyTypeForWave(int32 WaveNumber) const;
 };

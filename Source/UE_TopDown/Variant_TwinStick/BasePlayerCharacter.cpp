@@ -99,7 +99,10 @@ void ABasePlayerCharacter::Move(const FInputActionValue& Value)
 
     if (Controller)
     {
-
+        if (moveValue.GetAbsMax() > 0 && AttackMontage && GetMesh() && GetMesh()->GetAnimInstance())
+        {
+                GetMesh()->GetAnimInstance()->Montage_Play(RunningMontage);
+        }
         if (moveValue.X != 0.f)
         {
             const FRotator YawRotation(0.f, GetControlRotation().Yaw, 0.f);
@@ -142,7 +145,10 @@ void ABasePlayerCharacter::OnManaChanged(float CurrentMana, float MaxMana)
 
 void ABasePlayerCharacter::OnDeath()
 {
-   
+    if (AttackMontage && GetMesh() && GetMesh()->GetAnimInstance())
+    {
+        GetMesh()->GetAnimInstance()->Montage_Play(DeathMontage);
+    }
     DisableInput(nullptr);
     GetCharacterMovement()->DisableMovement();
 
@@ -233,7 +239,7 @@ void ABasePlayerCharacter::HandlePlayerDeath()
         AWaveManager* WaveManager = Cast<AWaveManager>(FoundManagers[0]);
         if (WaveManager)
         {
-            WaveManager->StopAllWaves();
+            WaveManager->StopWaveSystem();
         }
     }
     // Spawnowanie ekranu końcowego
