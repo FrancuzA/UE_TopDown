@@ -38,6 +38,9 @@ public:
     UFUNCTION(BlueprintCallable)
     float GetScoreValue() const { return ScoreValue; }
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat")
+    bool isAttacking = false;
+
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
     float MaxHealth = 100.0f;
 
