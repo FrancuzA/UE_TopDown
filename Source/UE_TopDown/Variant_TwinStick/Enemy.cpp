@@ -37,13 +37,16 @@ void AEnemy::Tick(float DeltaTime)
 
         if (Direction.Size() > AttackRange)
         {
+            isAttacking = false;
             FVector MovementDirection = Direction.GetSafeNormal();
             AddMovementInput(MovementDirection);
         }
         else
         {
+
             if (GetWorld()->GetTimeSeconds() - LastAttackTime > AttackCooldown)
             {
+                isAttacking = true;
                 Attack();
                 LastAttackTime = GetWorld()->GetTimeSeconds();
             }

@@ -50,6 +50,9 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
     float DamageOnHit = 10.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+    AActor* Target = nullptr;
+
 protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy")
     EEnemyType EnemyType = EEnemyType::Grunt;
@@ -73,7 +76,7 @@ protected:
     USphereComponent* DetectionSphere;
 
     float LastAttackTime = 0.0f;
-    AActor* Target = nullptr;
+   
 
     virtual void Die(AActor* DamageCauser = nullptr); // DEKLARACJA Z PARAMETREM
     virtual void Attack();
