@@ -66,10 +66,58 @@ void ABasePlayerCharacter::BeginPlay()
 }
 
 // Called every frame
+// Called every frame
 void ABasePlayerCharacter::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
+    Super::Tick(DeltaTime);
 
+    // Tylko w Play In Editor (nie w wyeksportowanej grze!)
+    if (GetWorld() && GetWorld()->IsPlayInEditor())
+    {
+        APlayerController* PC = GetController<APlayerController>();
+        if (!PC) return;
+
+        // Klawisz H: Odejmij 10 HP
+        if (PC->WasInputKeyJustPressed(EKeys::H))
+        {
+            if (Attributes)
+            {
+                UE_LOG(LogTemp, Warning, TEXT("DEBUG: Taking 10 damage"));
+                Attributes->ApplyDamage(10.0f);
+            }
+        }
+
+        // Klawisz M: Zużyj 20 Many
+        if (PC->WasInputKeyJustPressed(EKeys::M))
+        {
+            if (Attributes && Attributes->CanPayManaCost(20.0f))
+            {
+                UE_LOG(LogTemp, Warning, TEXT("DEBUG: Paying 20 mana"));
+                Attributes->PayMana(20.0f);
+            }
+        }
+
+        // Klawisz P: Dodaj 50 punktów
+        if (PC->WasInputKeyJustPressed(EKeys::P))
+        {
+            if (Attributes)
+            {
+                UE_LOG(LogTemp, Warning, TEXT("DEBUG: Adding 50 score"));
+                Attributes->AddScore(50);
+            }
+        }
+
+        // Klawisz R: Pełny respawn
+        if (PC->WasInputKeyJustPressed(EKeys::R))
+        {
+            if (Attributes)
+            {
+                UE_LOG(LogTemp, Warning, TEXT("DEBUG: Full respawn"));
+                Attributes->SetHealth(Attributes->GetMaxHealth());
+                Attributes->SetMana(Attributes->GetMaxMana());
+            }
+        }
+    }
 }
 
 // Called to bind functionality to input
@@ -247,7 +295,7 @@ void ABasePlayerCharacter::HandlePlayerDeath()
     {
         if (Attributes)
         {
-            GameOver->SetFinalScore(FMath::RoundToInt(Attributes->Score));
+            GameOver->SetFinalScore(Attributes->GetScore()); // ← bez RoundToInt!
         }
     }
 

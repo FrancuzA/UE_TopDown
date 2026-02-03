@@ -6,16 +6,19 @@
 #include "GameFramework/PlayerController.h"
 #include "BasePlayerController.generated.h"
 
+// Forward declaration – nie potrzebujemy pe³nego include'u w .h
+class UWBP_PlayerHUD;
+
 /**
- * 
+ *
  */
 UCLASS()
 class UE_TOPDOWN_API ABasePlayerController : public APlayerController
 {
-	GENERATED_BODY()
-	
+    GENERATED_BODY()
+
 public:
-   
+    virtual void BeginPlay() override;
 
     UFUNCTION(BlueprintCallable, Category = "HUD")
     void CreateHUD();
@@ -26,16 +29,11 @@ public:
     UFUNCTION(BlueprintCallable, Category = "HUD")
     void UpdateManaBar(float CurrentMana, float MaxMana);
 
+    // Zachowujemy Twoj¹ oryginaln¹ w³aœciwoœæ z Blueprint
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")
     TSubclassOf<class UUserWidget> HUDWidgetClass;
 
+    // Silnie typowany wskaŸnik do widgetu (wa¿ne!)
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HUD")
-    class UUserWidget* HUDWidget;
-
-
-private:
-  
-
-    virtual void BeginPlay() override;
-
+    UWBP_PlayerHUD* HUDWidget;
 };

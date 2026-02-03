@@ -27,7 +27,7 @@ void AMainHUD::Tick(float DeltaTime)
     // Aktualizacja UI
     UpdateHealth(PlayerCharacter->Attributes->GetHealth(), PlayerCharacter->Attributes->GetMaxHealth());
     UpdateMana(PlayerCharacter->Attributes->GetMana(), PlayerCharacter->Attributes->GetMaxMana());
-    UpdateScore(FMath::RoundToInt(PlayerCharacter->Attributes->Score));
+    UpdateScore(PlayerCharacter->Attributes->GetScore());
 
     // Aktualizacja czasu
     ElapsedTime += DeltaTime;

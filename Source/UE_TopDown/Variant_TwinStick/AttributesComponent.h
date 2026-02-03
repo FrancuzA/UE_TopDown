@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -6,9 +6,11 @@
 #include "Components/ActorComponent.h"
 #include "AttributesComponent.generated.h"
 
+// ====== DEKLARACJE DELEGATÓW — MUSZĄ BYĆ PRZED KLASĄ! ======
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDeathDelegate);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnAttributeChangedDelegate, float, CurrentValue, float, MaxValue);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnScoreChangedDelegate, float, CurrentScore);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHealthChanged, float, Health, float, MaxHealth);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnManaChanged, float, Mana, float, MaxMana);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnScoreChanged, int32, Score);
 
 USTRUCT(BlueprintType)
 struct FManaCost
@@ -22,31 +24,29 @@ struct FManaCost
     float ManaCost_Attack = 20.0f;
 };
 
-
-
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class UE_TOPDOWN_API UAttributesComponent : public UActorComponent
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
-public:	
-	// Sets default values for this component's properties
-	UAttributesComponent();
+public:
+    // Sets default values for this component's properties
+    UAttributesComponent();
 
 protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
+    // Called when the game starts
+    virtual void BeginPlay() override;
 
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-    // Health
+    // ===== HEALTH =====
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes")
     float MaxHealth = 100.0f;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attributes")
     float Health;
 
-    // Mana
+    // ===== MANA =====
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mana")
     float MaxMana = 100.0f;
 
@@ -58,15 +58,25 @@ protected:
 
     bool bIsRegeneratingMana = true;
 
-public:	
+    // ===== SCORE =====
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Score")
-    float Score = 0.0f;
+    int32 Score = 0;
 
-    
+public:
+    // ===== DELEGATY (EVENTY) =====
+    UPROPERTY(BlueprintAssignable, Category = "Attributes")
+    FOnDeathDelegate OnDeath;
+
+    UPROPERTY(BlueprintAssignable, Category = "Attributes")
+    FOnHealthChanged OnHealthChanged;
+
+    UPROPERTY(BlueprintAssignable, Category = "Mana")
+    FOnManaChanged OnManaChanged;
+
     UPROPERTY(BlueprintAssignable, Category = "Score")
-    FOnScoreChangedDelegate OnScoreChanged;
+    FOnScoreChanged OnScoreChanged;
 
-    // Health Functions
+    // ===== HEALTH FUNCTIONS =====
     UFUNCTION(BlueprintCallable, Category = "Attributes")
     float GetHealth() const { return Health; }
 
@@ -82,10 +92,14 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Attributes")
     bool IsAlive() const { return Health > 0.0f; }
 
+    // ===== SCORE FUNCTIONS =====
     UFUNCTION(BlueprintCallable, Category = "Score")
-    void AddScore(float Points);
+    int32 GetScore() const { return Score; }
 
-    // Stamina Functions
+    UFUNCTION(BlueprintCallable, Category = "Score")
+    void AddScore(int32 Points);
+
+    // ===== MANA FUNCTIONS =====
     UFUNCTION(BlueprintCallable, Category = "Mana")
     float GetMana() const { return Mana; }
 
@@ -106,15 +120,4 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Mana")
     void StopManaRegeneration() { bIsRegeneratingMana = false; }
-
-    // Delegates
-    UPROPERTY(BlueprintAssignable, Category = "Attributes")
-    FOnDeathDelegate OnDeath;
-
-    UPROPERTY(BlueprintAssignable, Category = "Attributes")
-    FOnAttributeChangedDelegate OnHealthChanged;
-
-    UPROPERTY(BlueprintAssignable, Category = "Mana")
-    FOnAttributeChangedDelegate OnManaChanged;
-		
 };
