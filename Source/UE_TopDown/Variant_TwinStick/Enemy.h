@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Components/SphereComponent.h" // POPRAWNY INCLUDE
+#include "AIController.h" // DODANE
 #include "Enemy.generated.h"
 
 UENUM(BlueprintType)
@@ -53,6 +54,11 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
     AActor* Target = nullptr;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI")
+    float MovementSpeed = 250.0f; // Prędkość ruchu w jednostkach/s
+
+    virtual void PossessedBy(AController* NewController) override;
+
 protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy")
     EEnemyType EnemyType = EEnemyType::Grunt;
@@ -81,4 +87,8 @@ protected:
     virtual void Die(AActor* DamageCauser = nullptr); // DEKLARACJA Z PARAMETREM
     virtual void Attack();
     virtual void DropItem();
+private:
+    float LastDebugTime = 0.0f;
+    UPROPERTY()
+    AAIController* CachedAIController = nullptr;
 };
