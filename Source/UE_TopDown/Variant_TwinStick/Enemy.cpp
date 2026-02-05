@@ -96,20 +96,18 @@ float AEnemy::TakeDamage(
 
     if (CurrentHealth <= 0.0f)
     {
-        Die(DamageCauser); // PRZEKAZUJEMY DAMAGECAUSER
+        Die(DamageCauser);
     }
 
     return DamageAmount;
 }
 
-void AEnemy::Die(AActor* DamageCauser) // IMPLEMENTACJA Z PARAMETREM
+void AEnemy::Die(AActor* DamageCauser) 
 {
-    // Natychmiastowe dezaktywowanie
     GetCharacterMovement()->DisableMovement();
     GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     SetActorTickEnabled(false);
 
-    // Przyznaj punkty
     if (DamageCauser && DamageCauser->GetInstigatorController())
     {
         ABasePlayerCharacter* Player = Cast<ABasePlayerCharacter>(DamageCauser->GetInstigator());
@@ -119,13 +117,11 @@ void AEnemy::Die(AActor* DamageCauser) // IMPLEMENTACJA Z PARAMETREM
         }
     }
 
-    // Drop itemu
     if (FMath::FRand() < DropChance && ItemToDrop)
     {
         DropItem();
     }
 
-    // Proste zniszczenie po 1s (BEZ TIMERÓW)
     SetLifeSpan(1.0f); 
 }
 
