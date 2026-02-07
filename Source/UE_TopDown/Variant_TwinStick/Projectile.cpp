@@ -1,4 +1,6 @@
 #include "Projectile.h"
+#include "GameFramework/DamageType.h"
+#include "Enemy.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
@@ -6,15 +8,23 @@
 
 AProjectile::AProjectile()
 {
-    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = false;
 
     CollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionSphere"));
     RootComponent = CollisionSphere;
-    Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-    Mesh->SetupAttachment(RootComponent);
     CollisionSphere->InitSphereRadius(20.0f);
     CollisionSphere->SetCollisionProfileName(TEXT("Projectile"));
     CollisionSphere->OnComponentHit.AddDynamic(this, &AProjectile::OnHit);
+
+    ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
+    ProjectileMovement->InitialSpeed = 3000.0f;
+    ProjectileMovement->MaxSpeed = 3000.0f;
+    ProjectileMovement->bRotationFollowsVelocity = true;
+    ProjectileMovement->bShouldBounce = false;
+    ProjectileMovement->ProjectileGravityScale = 0.0f;
+
+    Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+    Mesh->SetupAttachment(RootComponent);
 }
 
 void AProjectile::BeginPlay()
@@ -23,27 +33,24 @@ void AProjectile::BeginPlay()
     SetLifeSpan(LifeTime);
 }
 
-void AProjectile::Tick(float DeltaTime)
-{
-    Super::Tick(DeltaTime);
-}
-
 void AProjectile::FireInDirection(const FVector& Direction)
 {
     LaunchDirection = Direction.GetSafeNormal();
+    ProjectileMovement->Velocity = LaunchDirection * Speed;
 
-    FVector CurrentLocation = GetActorLocation();
-    SetActorLocation(CurrentLocation);
-
-    FVector NewVelocity = LaunchDirection * Speed;
-    Mesh->AddRelativeRotation(FRotator(0, FMath::RadiansToDegrees(FMath::Atan2(NewVelocity.Y, NewVelocity.X)), 0));
+    if (Mesh)
+    {
+        Mesh->SetRelativeRotation(FRotator(0, FMath::RadiansToDegrees(FMath::Atan2(LaunchDirection.Y, LaunchDirection.X)), 0));
+    }
 }
 
 void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+    AEnemy* _enemy = Cast<AEnemy>(OtherActor);
     if (OtherActor && OtherActor != this && OtherActor != GetOwner())
     {
-        // Obsługa zderzenia z wrogiem (będzie uzupełniona później)
+        _enemy->TakeDMG( Damage, this);
+
         Destroy();
     }
 }

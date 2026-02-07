@@ -87,10 +87,8 @@ void AEnemy::PossessedBy(AController* NewController)
     }
 }
 
-float AEnemy::TakeDamage(
+void AEnemy::TakeDMG(
     float DamageAmount,
-    const FDamageEvent& DamageEvent,
-    AController* EventInstigator,
     AActor* DamageCauser
 )
 {
@@ -100,8 +98,6 @@ float AEnemy::TakeDamage(
     {
         Die(DamageCauser);
     }
-
-    return DamageAmount;
 }
 
 void AEnemy::Die(AActor* DamageCauser) 

@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/SphereComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
+#include "GameFramework/DamageType.h"
 #include "Projectile.generated.h"
 
 UCLASS()
@@ -16,7 +18,6 @@ public:
     AProjectile();
 
     virtual void BeginPlay() override;
-    virtual void Tick(float DeltaTime) override;
 
     UFUNCTION(BlueprintCallable)
     void FireInDirection(const FVector& Direction);
@@ -27,6 +28,9 @@ protected:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     USphereComponent* CollisionSphere;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    UProjectileMovementComponent* ProjectileMovement;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
     float Speed = 1000.0f;

@@ -25,13 +25,9 @@ public:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
 
-    // POPRAWNA DEKLARACJA TakeDamage
-    virtual float TakeDamage(
-        float DamageAmount,
-        const FDamageEvent& DamageEvent,
-        AController* EventInstigator,
-        AActor* DamageCauser
-    ) override;
+    UFUNCTION(BLueprintCallable)
+    void TakeDMG(float DamageAmount,
+        AActor* DamageCauser);
 
     UFUNCTION(BlueprintCallable)
     EEnemyType GetEnemyType() const { return EnemyType; }

@@ -23,8 +23,8 @@ ABasePlayerCharacter::ABasePlayerCharacter()
     InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
 
     GetCharacterMovement()->bOrientRotationToMovement = false;
-    bUseControllerRotationPitch = true;
-    bUseControllerRotationYaw = true;
+    bUseControllerRotationPitch = false;
+    bUseControllerRotationYaw =true;
     bUseControllerRotationRoll = false;
 
     GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
@@ -209,31 +209,31 @@ void ABasePlayerCharacter::Interact()
 
 void ABasePlayerCharacter::Attack()
 {
+    if (!CurrentProjectileClass) CurrentProjectileClass = ProjectileClass;
     if (!Attributes || !CurrentProjectileClass) return;
 
-
-    // Sprawdź czy jest wystarczająca mana
-    if (Attributes->CanPayManaCost(ManaCost_Attack)) // Ta funkcja zostanie zmieniona w kolejnym kroku
+    if (Attributes->CanPayManaCost(ManaCost_Attack)) 
     {
-        Attributes->PayMana(ManaCost_Attack); // Zostanie zmienione na PayMana
+
+        Attributes->PayMana(ManaCost_Attack); 
 
         if (AttackMontage && GetMesh() && GetMesh()->GetAnimInstance())
         {
+
             GetMesh()->GetAnimInstance()->Montage_Play(AttackMontage);
         }
 
-        // Strzelanie
         FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 50);
-        FRotator SpawnRotation = GetControlRotation();
+        FRotator SpawnRotation = GetActorRotation();
 
         FActorSpawnParameters SpawnParams;
-        SpawnParams.Owner = this;
-        SpawnParams.Instigator = GetInstigator();
+        SpawnParams.Owner = this;       
+        SpawnParams.Instigator = this;
 
         if (CurrentProjectileClass)
         {
             AProjectile* Projectile = GetWorld()->SpawnActor<AProjectile>(
-                CurrentProjectileClass, // Używaj aktualnej broni
+                CurrentProjectileClass, 
                 SpawnLocation,
                 SpawnRotation,
                 SpawnParams
@@ -241,6 +241,7 @@ void ABasePlayerCharacter::Attack()
 
             if (Projectile)
             {
+
                 FVector LaunchDirection = SpawnRotation.Vector();
                 Projectile->FireInDirection(LaunchDirection);
             }
