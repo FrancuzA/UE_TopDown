@@ -56,7 +56,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UAttributesComponent* Attributes;
 
-	virtual void GetHit_Implementation(FVector HitLocation);
+	virtual void GetHit_Implementation(int DMG);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mana")
 	float ManaCost_Attack = 20.0f;

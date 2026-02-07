@@ -6,6 +6,8 @@
 #include "Components/CapsuleComponent.h"
 #include "Item.h"
 
+
+
 AEnemy::AEnemy()
 {
     PrimaryActorTick.bCanEverTick = true;
@@ -39,7 +41,7 @@ void AEnemy::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
 
     if (!Target) return;
-
+   
     // Pobierz AIController dynamicznie (bez cache):
     AAIController* AIController = Cast<AAIController>(GetController());
     if (!AIController) return;
@@ -129,9 +131,8 @@ void AEnemy::Attack()
 {
     if (Target)
     {
-        UE_LOG(LogTemp, Display, TEXT("Attack function called"));
-
-        UGameplayStatics::ApplyDamage(Target, DamageOnHit, nullptr, this, nullptr);
+        ABasePlayerCharacter* Player = Cast<ABasePlayerCharacter>(Target);
+        Player->GetHit_Implementation(DamageOnHit);
     }
 }
 

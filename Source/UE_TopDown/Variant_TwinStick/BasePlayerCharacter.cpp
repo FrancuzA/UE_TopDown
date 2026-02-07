@@ -248,13 +248,12 @@ void ABasePlayerCharacter::Attack()
     }
 }
 
-void ABasePlayerCharacter::GetHit_Implementation(FVector HitLocation)
+void ABasePlayerCharacter::GetHit_Implementation(int DMG)
 {
-
-
+    UE_LOG(LogTemp, Log, TEXT("Player Got Hit"));
     if (Attributes)
     {
-        Attributes->ApplyDamage(10.0f); // Przykładowe obrażenia
+        Attributes->ApplyDamage(DMG); // Przykładowe obrażenia
     }
 }
 
