@@ -6,7 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "BasePlayerController.generated.h"
 
-// Forward declaration – nie potrzebujemy pe³nego include'u w .h
+// Forward declaration ï¿½ nie potrzebujemy peï¿½nego include'u w .h
 class UWBP_PlayerHUD;
 
 /**
@@ -29,11 +29,14 @@ public:
     UFUNCTION(BlueprintCallable, Category = "HUD")
     void UpdateManaBar(float CurrentMana, float MaxMana);
 
-    // Zachowujemy Twoj¹ oryginaln¹ w³aœciwoœæ z Blueprint
+    UFUNCTION(BlueprintCallable, Category = "HUD")
+    void UpdateUIOnDeath();
+
+    // Zachowujemy Twojï¿½ oryginalnï¿½ wï¿½aï¿½ciwoï¿½ï¿½ z Blueprint
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")
     TSubclassOf<class UUserWidget> HUDWidgetClass;
 
-    // Silnie typowany wskaŸnik do widgetu (wa¿ne!)
+    // Silnie typowany wskaï¿½nik do widgetu (waï¿½ne!)
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HUD")
     UWBP_PlayerHUD* HUDWidget;
 };

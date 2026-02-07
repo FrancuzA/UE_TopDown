@@ -52,3 +52,7 @@ void ABasePlayerController::UpdateManaBar(float CurrentMana, float MaxMana)
         HUDWidget->SetManaPercent(CurrentMana / MaxMana);
     }
 }
+
+void ABasePlayerController::UpdateUIOnDeath()
+{
+}
