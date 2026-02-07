@@ -79,7 +79,10 @@ protected:
 
     void SpawnWave();
     void SpawnSingleEnemy(TSubclassOf<AEnemy> EnemyClass, const FEnemyStats& Stats);
+
+    UFUNCTION()
     void OnEnemyDestroyed(AActor* DestroyedActor);
+
     int32 CalculateEnemyCountForWave(int32 WaveNumber) const;
     FEnemyStats CalculateEnemyStatsForWave(int32 WaveNumber) const;
     TSubclassOf<AEnemy> GetRandomEnemyTypeForWave(int32 WaveNumber) const;

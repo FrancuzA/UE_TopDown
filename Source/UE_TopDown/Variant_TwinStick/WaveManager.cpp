@@ -78,9 +78,8 @@ void AWaveManager::SpawnWave()
 
 void AWaveManager::SpawnSingleEnemy(TSubclassOf<AEnemy> EnemyClass, const FEnemyStats& Stats)
 {
-    if (!EnemyClass || SpawnLocations.Num() == 0) return;
+    if (!EnemyClass || SpawnLocations.Num() == 0 || !GetWorld()) return;
 
-    // Losowa lokalizacja na krawędzi mapy
     FVector SpawnLocation = SpawnLocations[FMath::RandRange(0, SpawnLocations.Num() - 1)];
 
     FActorSpawnParameters SpawnParams;
@@ -89,25 +88,60 @@ void AWaveManager::SpawnSingleEnemy(TSubclassOf<AEnemy> EnemyClass, const FEnemy
     AEnemy* NewEnemy = GetWorld()->SpawnActor<AEnemy>(EnemyClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
     if (NewEnemy)
     {
-        // Modyfikacja statystyk wroga
+        // POPRAWNE POSIADANIE PRZEZ AI (KLUCZOWE!)
+        if (!NewEnemy->GetController())
+        {
+            // Użyj domyślnego AIController z GameMode
+            AAIController* AIController = GetWorld()->SpawnActor<AAIController>(AAIController::StaticClass());
+            if (AIController)
+            {
+                AIController->Possess(NewEnemy);
+                UE_LOG(LogTemp, Log, TEXT("Enemy %s possessed by AIController"), *NewEnemy->GetName());
+            }
+            else
+            {
+                UE_LOG(LogTemp, Warning, TEXT("Failed to spawn AIController for enemy %s"), *NewEnemy->GetName());
+            }
+        }
+
+        // Modyfikacja statystyk
         NewEnemy->MaxHealth *= Stats.HealthMultiplier;
         NewEnemy->CurrentHealth = NewEnemy->MaxHealth;
         NewEnemy->DamageOnHit *= Stats.DamageMultiplier;
 
-        // Modyfikacja prędkości (tylko dla CharacterMovement)
         if (NewEnemy->GetCharacterMovement())
         {
             NewEnemy->GetCharacterMovement()->MaxWalkSpeed *= Stats.SpeedMultiplier;
         }
 
         EnemiesAlive++;
+
+        // POPRAWNE WIĄZANIE DELEGATA (patrz Problem 2)
         NewEnemy->OnDestroyed.AddDynamic(this, &AWaveManager::OnEnemyDestroyed);
     }
 }
 
 void AWaveManager::OnEnemyDestroyed(AActor* DestroyedActor)
 {
+    if (!DestroyedActor) return;
+
     EnemiesAlive = FMath::Max(0, EnemiesAlive - 1);
+    UE_LOG(LogTemp, Log, TEXT("Enemy destroyed. Enemies alive: %d"), EnemiesAlive);
+
+    // Sprawdź czy fala zakończona
+    if (EnemiesAlive <= 0 && bWaveInProgress)
+    {
+        UE_LOG(LogTemp, Log, TEXT("Wave %d completed!"), CurrentWave);
+
+        // Następna fala po przerwie
+        GetWorldTimerManager().SetTimer(
+            WaveTimer,
+            this,
+            &AWaveManager::SpawnWave,
+            TimeBetweenWaves,
+            false
+        );
+    }
 }
 
 int32 AWaveManager::CalculateEnemyCountForWave(int32 WaveNumber) const
