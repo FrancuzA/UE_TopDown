@@ -1,36 +1,39 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Variant_TwinStick/BasePlayerController.h"
+#include "BasePlayerController.h"
 #include "Blueprint/UserWidget.h"
+#include "WBP_PlayerHUD.h"
 #include "BasePlayerCharacter.h"
 #include "AttributesComponent.h"
-#include "WBP_PlayerHUD.h" // ← kluczowy include!
+#include "Kismet/GameplayStatics.h"
 
 void ABasePlayerController::BeginPlay()
 {
     Super::BeginPlay();
+
+    // ✅ RESET INPUTU NA START (kluczowa linijka!)
+    SetInputMode(FInputModeGameOnly());
+    bShowMouseCursor = false;
+    bEnableClickEvents = false;
+    bEnableMouseOverEvents = false;
+
     CreateHUD();
 }
-
 void ABasePlayerController::CreateHUD()
 {
-    if (HUDWidgetClass)
+    if (HUDWidgetClass && !HUDWidget)
     {
-        // TWORZYMY WIDGET I RZUTUJEMY NA UWBP_PlayerHUD
         HUDWidget = CreateWidget<UWBP_PlayerHUD>(this, HUDWidgetClass);
         if (HUDWidget)
         {
-            HUDWidget->AddToViewport();
+            HUDWidget->AddToViewport(50);
 
-            // Odświeżamy UI z początkowymi wartościami jeśli postać już istnieje
             if (ABasePlayerCharacter* PC = Cast<ABasePlayerCharacter>(GetPawn()))
             {
                 if (PC->Attributes)
                 {
                     UpdateHealthBar(PC->Attributes->GetHealth(), PC->Attributes->GetMaxHealth());
                     UpdateManaBar(PC->Attributes->GetMana(), PC->Attributes->GetMaxMana());
-                    // Jeśli masz UpdateScore – dodaj też:
-                    // UpdateScore(PC->Attributes->GetScore());
                 }
             }
         }
@@ -53,6 +56,28 @@ void ABasePlayerController::UpdateManaBar(float CurrentMana, float MaxMana)
     }
 }
 
-void ABasePlayerController::UpdateUIOnDeath()
+void ABasePlayerController::ShowGameOverScreen(int32 FinalScore)
 {
+    // 1. Schowaj HUD gry
+    if (HUDWidget)
+    {
+        HUDWidget->RemoveFromParent();
+        HUDWidget = nullptr;
+    }
+
+    // 2. Stwórz ekran przegranej JEDNORAZOWO
+    if (!LooseScreenWidget && LooseScreenWidgetClass)
+    {
+        LooseScreenWidget = CreateWidget<UUserWidget>(this, LooseScreenWidgetClass);
+        if (LooseScreenWidget)
+        {
+            LooseScreenWidget->AddToViewport(100);
+        }
+    }
+
+    // 3. Zablokuj input gry, odblokuj UI
+    SetInputMode(FInputModeUIOnly());
+    bShowMouseCursor = true;
+    bEnableClickEvents = true;
+    bEnableMouseOverEvents = true;
 }

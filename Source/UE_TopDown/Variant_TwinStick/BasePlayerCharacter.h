@@ -1,16 +1,15 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿/// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputAction.h"
-#include "GameOverScreen.h"
+// #include "GameOverScreen.h" // ← USUŃ PO SKOMPILOWANIU!
 #include "InputMappingContext.h"
 #include "Animation/AnimMontage.h"
 #include "AttributesComponent.h"
 #include "BasePlayerCharacter.generated.h"
-
 
 class UCameraComponent;
 class USpringArmComponent;
@@ -22,106 +21,94 @@ struct FInputActionValue;
 UCLASS()
 class UE_TOPDOWN_API ABasePlayerCharacter : public ACharacter
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
-	ABasePlayerCharacter();
+    ABasePlayerCharacter();
+    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+    UFUNCTION(BlueprintCallable)
+    FVector GetCameraLocation();
 
-	UFUNCTION(BlueprintCallable)
-	FVector GetCameraLocation();
+    UFUNCTION(BlueprintCallable)
+    FVector GetCameraForwardVector();
 
-	UFUNCTION(BlueprintCallable)
-	FVector GetCameraForwardVector();
+    UFUNCTION(BlueprintCallable)
+    void Interact();
 
-	UFUNCTION(BlueprintCallable)
-	void Interact();
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+    UAnimMontage* AttackMontage;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
-	UAnimMontage* AttackMontage;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+    UAnimMontage* RangeAttackMontage;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
-	UAnimMontage* RangeAttackMontage;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+    UAnimMontage* RunningMontage;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
-	UAnimMontage* RunningMontage;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+    UAnimMontage* DeathMontage;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
-	UAnimMontage* DeathMontage;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    UAttributesComponent* Attributes;
 
+    virtual void GetHit_Implementation(int DMG);
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mana")
+    float ManaCost_Attack = 20.0f;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UAttributesComponent* Attributes;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+    TSubclassOf<class AProjectile> ProjectileClass;
 
-	virtual void GetHit_Implementation(int DMG);
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+    float ProjectileSpeed = 1000.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mana")
-	float ManaCost_Attack = 20.0f;
+    UFUNCTION(BlueprintCallable)
+    void Attack();
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
-	TSubclassOf<class AProjectile> ProjectileClass;
+    UFUNCTION()
+    void HandlePlayerDeath();
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
-	float ProjectileSpeed = 1000.0f;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+    TSubclassOf<AProjectile> CurrentProjectileClass;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+    UInputAction* MoveAction;
 
-	UFUNCTION(BlueprintCallable)
-	void Attack();
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+    UInputAction* LookAction;
 
-	UFUNCTION()
-	void HandlePlayerDeath();
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+    UInputAction* InteractAction;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
-	TSubclassOf<AProjectile> CurrentProjectileClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
-	UInputAction* MoveAction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
-	UInputAction* LookAction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
-	UInputAction* InteractAction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
-	UInputAction* AttackAction;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+    UInputAction* AttackAction;
 
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+    virtual void BeginPlay() override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
-	UInputMappingContext* MappingContext;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+    UInputMappingContext* MappingContext;
 
-	/** Input actions */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    USpringArmComponent* CameraBoom;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    UInteractionComponent* InteractionComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	USpringArmComponent* CameraBoom;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    UCameraComponent* ViewCamera;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UInteractionComponent* InteractionComponent;
+private:
+    virtual void Tick(float DeltaTime) override;
+    void Move(const FInputActionValue& value);
+    void Look(const FInputActionValue& value);
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UCameraComponent* ViewCamera;
+    UFUNCTION()
+    void OnHealthChanged(float CurrentHealth, float MaxHealth);
 
-private:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+    UFUNCTION()
+    void OnManaChanged(float CurrentMana, float MaxMana);
 
-	void Move(const FInputActionValue& value);
-	void Look(const FInputActionValue& value);
-
-	UFUNCTION()
-	void OnHealthChanged(float CurrentHealth, float MaxHealth);
-
-	UFUNCTION()
-	void OnManaChanged(float CurrentMana, float MaxMana);
-
-	UFUNCTION()
-	void OnDeath();
-
+    UFUNCTION()
+    void OnDeath();
 };
