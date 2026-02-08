@@ -20,9 +20,10 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 
     InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
 
+    // ✅ ROOT NIE OBRACA SIĘ (ani z ruchem, ani z myszką)
     GetCharacterMovement()->bOrientRotationToMovement = false;
     bUseControllerRotationPitch = false;
-    bUseControllerRotationYaw = true;
+    bUseControllerRotationYaw = false;  // ← KLUCZOWE: root nieruchomy
     bUseControllerRotationRoll = false;
 
     GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
@@ -30,13 +31,13 @@ ABasePlayerCharacter::ABasePlayerCharacter()
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
     CameraBoom->SetupAttachment(GetRootComponent());
     CameraBoom->TargetArmLength = 150.f;
-    CameraBoom->bUsePawnControlRotation = true;
+    CameraBoom->bUsePawnControlRotation = true; // SpringArm obraca się z myszką (celowanie)
+
     ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ViewCamera"));
     ViewCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
     ViewCamera->bUsePawnControlRotation = false;
 
     Attributes = CreateDefaultSubobject<UAttributesComponent>(TEXT("Attributes"));
-
     CurrentProjectileClass = ProjectileClass;
 }
 
@@ -66,6 +67,7 @@ void ABasePlayerCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
+    // ========== TYLKO DEBUG KODY (H/M/P/R) ==========
     if (GetWorld() && GetWorld()->IsPlayInEditor())
     {
         APlayerController* PC = GetController<APlayerController>();
@@ -73,42 +75,32 @@ void ABasePlayerCharacter::Tick(float DeltaTime)
 
         if (PC->WasInputKeyJustPressed(EKeys::H))
         {
-            if (Attributes)
-            {
-                UE_LOG(LogTemp, Warning, TEXT("DEBUG: Taking 10 damage"));
-                Attributes->ApplyDamage(10.0f);
-            }
+            if (Attributes) Attributes->ApplyDamage(10.0f);
         }
 
         if (PC->WasInputKeyJustPressed(EKeys::M))
         {
-            if (Attributes && Attributes->CanPayManaCost(20.0f))
-            {
-                UE_LOG(LogTemp, Warning, TEXT("DEBUG: Paying 20 mana"));
-                Attributes->PayMana(20.0f);
-            }
+            if (Attributes && Attributes->CanPayManaCost(20.0f)) Attributes->PayMana(20.0f);
         }
 
         if (PC->WasInputKeyJustPressed(EKeys::P))
         {
-            if (Attributes)
-            {
-                UE_LOG(LogTemp, Warning, TEXT("DEBUG: Adding 50 score"));
-                Attributes->AddScore(50);
-            }
+            if (Attributes) Attributes->AddScore(50);
         }
 
         if (PC->WasInputKeyJustPressed(EKeys::R))
         {
             if (Attributes)
             {
-                UE_LOG(LogTemp, Warning, TEXT("DEBUG: Full respawn"));
                 Attributes->SetHealth(Attributes->GetMaxHealth());
                 Attributes->SetMana(Attributes->GetMaxMana());
             }
         }
     }
+
+    // ✅ BRAK OBRACANIA – root nieruchomy, ruch ekranowo-relatywny
 }
+
 
 void ABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -131,27 +123,15 @@ void ABasePlayerCharacter::Look(const FInputActionValue& Value)
 
 void ABasePlayerCharacter::Move(const FInputActionValue& Value)
 {
-    FVector2D moveValue = Value.Get<FVector2D>();
+    FVector2D MoveValue = Value.Get<FVector2D>();
 
-    if (Controller)
+    if (Controller && (MoveValue.X != 0.0f || MoveValue.Y != 0.0f))
     {
-        if (moveValue.GetAbsMax() > 0 && AttackMontage && GetMesh() && GetMesh()->GetAnimInstance())
-        {
-            GetMesh()->GetAnimInstance()->Montage_Play(RunningMontage);
-        }
-        if (moveValue.X != 0.f)
-        {
-            const FRotator YawRotation(0.f, GetControlRotation().Yaw, 0.f);
-            const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-            AddMovementInput(Direction, moveValue.X);
-        }
-
-        if (moveValue.Y != 0.f)
-        {
-            const FRotator YawRotation(0.f, GetControlRotation().Yaw, 0.f);
-            const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-            AddMovementInput(Direction, moveValue.Y);
-        }
+        // ✅ POPRAWNE OSIOWANIE:
+        // A/D = lewo/prawo świata (oś X)
+        // W/S = góra/dół świata (oś Y)
+        AddMovementInput(FVector(1.0f, 0.0f, 0.0f), MoveValue.X); // A/D → lewo/prawo
+        AddMovementInput(FVector(0.0f, 1.0f, 0.0f), MoveValue.Y); // W/S → góra/dół
     }
 }
 
