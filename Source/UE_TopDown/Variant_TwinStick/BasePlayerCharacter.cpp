@@ -12,6 +12,7 @@
 #include "Projectile.h"
 #include "WaveManager.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/Controller.h" // ✅ DODANE – dla GetController()
 #include "Kismet/GameplayStatics.h"
 
 ABasePlayerCharacter::ABasePlayerCharacter()
@@ -20,10 +21,9 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 
     InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
 
-    // ✅ ROOT NIE OBRACA SIĘ (ani z ruchem, ani z myszką)
     GetCharacterMovement()->bOrientRotationToMovement = false;
     bUseControllerRotationPitch = false;
-    bUseControllerRotationYaw = false;  // ← KLUCZOWE: root nieruchomy
+    bUseControllerRotationYaw = false;
     bUseControllerRotationRoll = false;
 
     GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
@@ -31,7 +31,7 @@ ABasePlayerCharacter::ABasePlayerCharacter()
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
     CameraBoom->SetupAttachment(GetRootComponent());
     CameraBoom->TargetArmLength = 150.f;
-    CameraBoom->bUsePawnControlRotation = true; // SpringArm obraca się z myszką (celowanie)
+    CameraBoom->bUsePawnControlRotation = true;
 
     ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ViewCamera"));
     ViewCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
@@ -60,6 +60,14 @@ void ABasePlayerCharacter::BeginPlay()
         Attributes->OnDeath.AddDynamic(this, &ABasePlayerCharacter::HandlePlayerDeath);
         Attributes->OnHealthChanged.AddDynamic(this, &ABasePlayerCharacter::OnHealthChanged);
         Attributes->OnManaChanged.AddDynamic(this, &ABasePlayerCharacter::OnManaChanged);
+        // ✅ PODPIĘCIE EVENTU SCORE:
+        Attributes->OnScoreChanged.AddDynamic(this, &ABasePlayerCharacter::OnScoreChanged);
+    }
+
+    // ✅ TWÓRZ HUD TYLKO GDY JEST POSTAĆ GRACZA
+    if (ABasePlayerController* PC = Cast<ABasePlayerController>(GetController()))
+    {
+        PC->CreateHUD();
     }
 }
 
@@ -67,7 +75,6 @@ void ABasePlayerCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    // ========== TYLKO DEBUG KODY (H/M/P/R) ==========
     if (GetWorld() && GetWorld()->IsPlayInEditor())
     {
         APlayerController* PC = GetController<APlayerController>();
@@ -97,10 +104,7 @@ void ABasePlayerCharacter::Tick(float DeltaTime)
             }
         }
     }
-
-    // ✅ BRAK OBRACANIA – root nieruchomy, ruch ekranowo-relatywny
 }
-
 
 void ABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -127,11 +131,8 @@ void ABasePlayerCharacter::Move(const FInputActionValue& Value)
 
     if (Controller && (MoveValue.X != 0.0f || MoveValue.Y != 0.0f))
     {
-        // ✅ POPRAWNE OSIOWANIE:
-        // A/D = lewo/prawo świata (oś X)
-        // W/S = góra/dół świata (oś Y)
-        AddMovementInput(FVector(1.0f, 0.0f, 0.0f), MoveValue.X); // A/D → lewo/prawo
-        AddMovementInput(FVector(0.0f, 1.0f, 0.0f), MoveValue.Y); // W/S → góra/dół
+        AddMovementInput(FVector(1.0f, 0.0f, 0.0f), MoveValue.X);
+        AddMovementInput(FVector(0.0f, 1.0f, 0.0f), MoveValue.Y);
     }
 }
 
@@ -150,6 +151,16 @@ void ABasePlayerCharacter::OnManaChanged(float CurrentMana, float MaxMana)
     if (PC)
     {
         PC->UpdateManaBar(CurrentMana, MaxMana);
+    }
+}
+
+// ✅ POPRAWIONA FUNKCJA SCORE:
+void ABasePlayerCharacter::OnScoreChanged(int32 NewScore)
+{
+    ABasePlayerController* PC = Cast<ABasePlayerController>(GetController());
+    if (PC)
+    {
+        PC->UpdateScore(NewScore);
     }
 }
 
@@ -246,7 +257,6 @@ void ABasePlayerCharacter::HandlePlayerDeath()
         }
     }
 
-    // ✅ NOWY SYSTEM: WIDGET ZAMIAST GameOverScreen
     if (ABasePlayerController* PC = Cast<ABasePlayerController>(GetController()))
     {
         int32 FinalScore = Attributes ? Attributes->GetScore() : 0;

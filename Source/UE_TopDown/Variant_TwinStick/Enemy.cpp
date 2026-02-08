@@ -23,6 +23,7 @@ AEnemy::AEnemy()
     DetectionSphere->SetCollisionProfileName(TEXT("NoCollision"));
 
     CurrentHealth = MaxHealth;
+    ScoreValue = 20.0f; // ✅ 20 PUNKTÓW ZA KAŻDEGO WROGA
 }
 
 void AEnemy::BeginPlay()
@@ -37,7 +38,7 @@ void AEnemy::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    if (bIsDead) return; // ✅ NIE TICKUJ MARTWYCH
+    if (bIsDead) return;
     if (!Target) return;
 
     AAIController* AIController = Cast<AAIController>(GetController());
@@ -82,7 +83,6 @@ void AEnemy::PossessedBy(AController* NewController)
     }
 }
 
-// ✅ GŁÓWNA FUNKCJA – ZABIJ OD RAZU
 void AEnemy::TakeDMG(float DamageAmount, AActor* DamageCauser)
 {
     if (bIsDead) return;
@@ -92,7 +92,6 @@ void AEnemy::TakeDMG(float DamageAmount, AActor* DamageCauser)
 
     CurrentHealth -= DamageAmount;
 
-    // ✅ ZABIJ OD RAZU gdy HP <= 0 (z marginesem na float)
     if (CurrentHealth <= 0.1f && !bIsDead)
     {
         bIsDead = true;
@@ -115,14 +114,13 @@ void AEnemy::TakeDMG(float DamageAmount, AActor* DamageCauser)
             UE_LOG(LogTemp, Warning, TEXT("✅ Dropped item: %s"), *ItemToDrop->GetName());
         }
 
-        // ✅ ZNIKNIJ OD RAZU – BEZ SetLifeSpan(), BEZ Die()
         Destroy();
     }
 }
 
 void AEnemy::Attack()
 {
-    if (bIsDead || !Target) return; // ✅ NIE ATAKUJ MARTWYCH
+    if (bIsDead || !Target) return;
 
     ABasePlayerCharacter* Player = Cast<ABasePlayerCharacter>(Target);
     if (Player)

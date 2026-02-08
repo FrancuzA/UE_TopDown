@@ -5,22 +5,21 @@
 #include "WBP_PlayerHUD.h"
 #include "BasePlayerCharacter.h"
 #include "AttributesComponent.h"
-#include "Kismet/GameplayStatics.h"
 
 void ABasePlayerController::BeginPlay()
 {
     Super::BeginPlay();
 
-    // ✅ RESET INPUTU NA START (kluczowa linijka!)
     SetInputMode(FInputModeGameOnly());
     bShowMouseCursor = false;
     bEnableClickEvents = false;
     bEnableMouseOverEvents = false;
-
-    CreateHUD();
 }
+
 void ABasePlayerController::CreateHUD()
 {
+    if (HUDWidget) return;
+
     if (HUDWidgetClass && !HUDWidget)
     {
         HUDWidget = CreateWidget<UWBP_PlayerHUD>(this, HUDWidgetClass);
@@ -34,6 +33,7 @@ void ABasePlayerController::CreateHUD()
                 {
                     UpdateHealthBar(PC->Attributes->GetHealth(), PC->Attributes->GetMaxHealth());
                     UpdateManaBar(PC->Attributes->GetMana(), PC->Attributes->GetMaxMana());
+                    UpdateScore(PC->Attributes->GetScore());
                 }
             }
         }
@@ -56,16 +56,22 @@ void ABasePlayerController::UpdateManaBar(float CurrentMana, float MaxMana)
     }
 }
 
+void ABasePlayerController::UpdateScore(int32 Score)
+{
+    if (HUDWidget)
+    {
+        HUDWidget->SetScoreText(Score);
+    }
+}
+
 void ABasePlayerController::ShowGameOverScreen(int32 FinalScore)
 {
-    // 1. Schowaj HUD gry
     if (HUDWidget)
     {
         HUDWidget->RemoveFromParent();
         HUDWidget = nullptr;
     }
 
-    // 2. Stwórz ekran przegranej JEDNORAZOWO
     if (!LooseScreenWidget && LooseScreenWidgetClass)
     {
         LooseScreenWidget = CreateWidget<UUserWidget>(this, LooseScreenWidgetClass);
@@ -75,7 +81,6 @@ void ABasePlayerController::ShowGameOverScreen(int32 FinalScore)
         }
     }
 
-    // 3. Zablokuj input gry, odblokuj UI
     SetInputMode(FInputModeUIOnly());
     bShowMouseCursor = true;
     bEnableClickEvents = true;

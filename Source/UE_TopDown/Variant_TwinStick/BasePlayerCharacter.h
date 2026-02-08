@@ -1,11 +1,10 @@
-﻿/// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputAction.h"
-// #include "GameOverScreen.h" // ← USUŃ PO SKOMPILOWANIU!
 #include "InputMappingContext.h"
 #include "Animation/AnimMontage.h"
 #include "AttributesComponent.h"
@@ -108,6 +107,10 @@ private:
 
     UFUNCTION()
     void OnManaChanged(float CurrentMana, float MaxMana);
+
+    // ✅ KLUCZOWA DEKLARACJA – BRAKOWAŁA W POPRZEDNICH WERSJACH:
+    UFUNCTION()
+    void OnScoreChanged(int32 NewScore);
 
     UFUNCTION()
     void OnDeath();

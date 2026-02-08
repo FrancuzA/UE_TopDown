@@ -26,6 +26,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "HUD")
     void UpdateManaBar(float CurrentMana, float MaxMana);
 
+    UFUNCTION(BlueprintCallable, Category = "HUD")
+    void UpdateScore(int32 Score);
+
     UFUNCTION(BlueprintCallable, Category = "Game Over")
     void ShowGameOverScreen(int32 FinalScore);
 
