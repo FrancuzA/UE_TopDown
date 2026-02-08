@@ -1,9 +1,12 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Components/SphereComponent.h" // POPRAWNY INCLUDE
-#include "AIController.h" // DODANE
+#include "Components/SphereComponent.h"
+#include "AIController.h"
+#include "Item.h"
 #include "Enemy.generated.h"
 
 UENUM(BlueprintType)
@@ -25,9 +28,8 @@ public:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
 
-    UFUNCTION(BLueprintCallable)
-    void TakeDMG(float DamageAmount,
-        AActor* DamageCauser);
+    UFUNCTION(BlueprintCallable)
+    void TakeDMG(float DamageAmount, AActor* DamageCauser);
 
     UFUNCTION(BlueprintCallable)
     EEnemyType GetEnemyType() const { return EnemyType; }
@@ -51,7 +53,7 @@ public:
     AActor* Target = nullptr;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI")
-    float MovementSpeed = 250.0f; // Prędkość ruchu w jednostkach/s
+    float MovementSpeed = 250.0f;
 
     virtual void PossessedBy(AController* NewController) override;
 
@@ -78,12 +80,12 @@ protected:
     USphereComponent* DetectionSphere;
 
     float LastAttackTime = 0.0f;
-   
 
-    virtual void Die(AActor* DamageCauser = nullptr); // DEKLARACJA Z PARAMETREM
     virtual void Attack();
     virtual void DropItem();
+
 private:
+    bool bIsDead = false;
     float LastDebugTime = 0.0f;
     UPROPERTY()
     AAIController* CachedAIController = nullptr;

@@ -1,3 +1,5 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
 #include "Enemy.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -6,8 +8,6 @@
 #include "Components/CapsuleComponent.h"
 #include "Item.h"
 
-
-
 AEnemy::AEnemy()
 {
     PrimaryActorTick.bCanEverTick = true;
@@ -15,9 +15,8 @@ AEnemy::AEnemy()
     bUseControllerRotationYaw = false;
     GetCharacterMovement()->bOrientRotationToMovement = true;
     GetCharacterMovement()->MaxWalkSpeed = 250.0f;
-    GetCharacterMovement()->GravityScale = 1.0f; // Normalna grawitacja dla 3D
+    GetCharacterMovement()->GravityScale = 1.0f;
 
-    // Komponenty:
     DetectionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("DetectionSphere"));
     DetectionSphere->SetupAttachment(GetRootComponent());
     DetectionSphere->InitSphereRadius(500.0f);
@@ -34,15 +33,13 @@ void AEnemy::BeginPlay()
     UE_LOG(LogTemp, Log, TEXT("Enemy %s spawned"), *GetName());
 }
 
-
-
 void AEnemy::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
+    if (bIsDead) return; // ✅ NIE TICKUJ MARTWYCH
     if (!Target) return;
-   
-    // Pobierz AIController dynamicznie (bez cache):
+
     AAIController* AIController = Cast<AAIController>(GetController());
     if (!AIController) return;
 
@@ -51,7 +48,7 @@ void AEnemy::Tick(float DeltaTime)
     if (DistanceXY > AttackRange)
     {
         isAttacking = false;
-        AIController->MoveToActor(Target, 50.0f); // 50.0f = promień akceptacji
+        AIController->MoveToActor(Target, 50.0f);
     }
     else
     {
@@ -70,13 +67,11 @@ void AEnemy::PossessedBy(AController* NewController)
 {
     Super::PossessedBy(NewController);
 
-    // Teraz mamy AIController!
     AAIController* AIController = Cast<AAIController>(NewController);
     if (AIController)
     {
         UE_LOG(LogTemp, Log, TEXT("Enemy %s POSSESSED by AIController"), *GetName());
 
-        // Opcjonalnie: rozpocznij śledzenie gracza
         TArray<AActor*> Players;
         UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABasePlayerCharacter::StaticClass(), Players);
         if (Players.Num() > 0)
@@ -87,53 +82,59 @@ void AEnemy::PossessedBy(AController* NewController)
     }
 }
 
-void AEnemy::TakeDMG(
-    float DamageAmount,
-    AActor* DamageCauser
-)
+// ✅ GŁÓWNA FUNKCJA – ZABIJ OD RAZU
+void AEnemy::TakeDMG(float DamageAmount, AActor* DamageCauser)
 {
+    if (bIsDead) return;
+
+    UE_LOG(LogTemp, Warning, TEXT("Enemy %s taking %f damage. Health: %f -> %f"),
+        *GetName(), DamageAmount, CurrentHealth, CurrentHealth - DamageAmount);
+
     CurrentHealth -= DamageAmount;
 
-    if (CurrentHealth <= 0.0f)
+    // ✅ ZABIJ OD RAZU gdy HP <= 0 (z marginesem na float)
+    if (CurrentHealth <= 0.1f && !bIsDead)
     {
-        Die(DamageCauser);
-    }
-}
+        bIsDead = true;
 
-void AEnemy::Die(AActor* DamageCauser) 
-{
-    GetCharacterMovement()->DisableMovement();
-    GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    SetActorTickEnabled(false);
-
-    if (DamageCauser && DamageCauser->GetInstigatorController())
-    {
-        ABasePlayerCharacter* Player = Cast<ABasePlayerCharacter>(DamageCauser->GetInstigator());
-        if (Player && Player->Attributes)
+        // Nalicz punkty
+        if (DamageCauser && DamageCauser->GetInstigatorController())
         {
-            Player->Attributes->AddScore(ScoreValue);
+            ABasePlayerCharacter* Player = Cast<ABasePlayerCharacter>(DamageCauser->GetInstigator());
+            if (Player && Player->Attributes)
+            {
+                Player->Attributes->AddScore(ScoreValue);
+                UE_LOG(LogTemp, Warning, TEXT("✅ Awarded %f score for killing %s"), ScoreValue, *GetName());
+            }
         }
-    }
 
-    if (FMath::FRand() < DropChance && ItemToDrop)
-    {
-        DropItem();
-    }
+        // Drop itemu
+        if (FMath::FRand() < DropChance && ItemToDrop)
+        {
+            DropItem();
+            UE_LOG(LogTemp, Warning, TEXT("✅ Dropped item: %s"), *ItemToDrop->GetName());
+        }
 
-    SetLifeSpan(1.0f); 
+        // ✅ ZNIKNIJ OD RAZU – BEZ SetLifeSpan(), BEZ Die()
+        Destroy();
+    }
 }
 
 void AEnemy::Attack()
 {
-    if (Target)
+    if (bIsDead || !Target) return; // ✅ NIE ATAKUJ MARTWYCH
+
+    ABasePlayerCharacter* Player = Cast<ABasePlayerCharacter>(Target);
+    if (Player)
     {
-        ABasePlayerCharacter* Player = Cast<ABasePlayerCharacter>(Target);
         Player->GetHit_Implementation(DamageOnHit);
     }
 }
 
 void AEnemy::DropItem()
 {
+    if (bIsDead) return;
+
     FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 50);
     FRotator SpawnRotation = FRotator::ZeroRotator;
 
