@@ -1,3 +1,5 @@
+﻿// Fill out your copyright notice in the Description page of Project Settings.
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -10,19 +12,21 @@ class UE_TOPDOWN_API UWBP_PlayerHUD : public UUserWidget
     GENERATED_BODY()
 
 public:
-    UFUNCTION(BlueprintCallable, Category = "UI")
-    void SetHealthPercent(float Percent);
-
-    UFUNCTION(BlueprintCallable, Category = "UI")
-    void SetManaPercent(float Percent);
-
-    UFUNCTION(BlueprintCallable, Category = "UI")
-    void SetScore(int32 Score);
-
-protected:
     virtual void NativeConstruct() override;
 
-private:
+    UFUNCTION(BlueprintCallable, Category = "HUD")
+    void SetHealthPercent(float Percent);
+
+    UFUNCTION(BlueprintCallable, Category = "HUD")
+    void SetManaPercent(float Percent);
+
+    UFUNCTION(BlueprintCallable, Category = "HUD")
+    void SetScoreText(int32 Score);
+
+    UFUNCTION(BlueprintCallable, Category = "HUD")
+    void SetTimerText(const FString& TimeText);
+
+protected:
     UPROPERTY(meta = (BindWidget))
     class UProgressBar* HealthBar;
 
@@ -31,4 +35,7 @@ private:
 
     UPROPERTY(meta = (BindWidget))
     class UTextBlock* ScoreText;
+
+    UPROPERTY(meta = (BindWidget))
+    class UTextBlock* TimerText; // ✅ DODANE – MUSI SIĘ NAZYWAĆ "TimerText" W BLUEPRINT!
 };

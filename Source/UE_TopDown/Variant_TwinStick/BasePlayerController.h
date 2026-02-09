@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -6,12 +6,10 @@
 #include "GameFramework/PlayerController.h"
 #include "BasePlayerController.generated.h"
 
-// Forward declaration � nie potrzebujemy pe�nego include'u w .h
 class UWBP_PlayerHUD;
+class UUserWidget;
+class UTextBlock; // ✅ DODANE – forward declaration
 
-/**
- *
- */
 UCLASS()
 class UE_TOPDOWN_API ABasePlayerController : public APlayerController
 {
@@ -19,6 +17,7 @@ class UE_TOPDOWN_API ABasePlayerController : public APlayerController
 
 public:
     virtual void BeginPlay() override;
+    virtual void Tick(float DeltaTime) override; // ✅ DODANE – deklaracja Tick
 
     UFUNCTION(BlueprintCallable, Category = "HUD")
     void CreateHUD();
@@ -30,13 +29,23 @@ public:
     void UpdateManaBar(float CurrentMana, float MaxMana);
 
     UFUNCTION(BlueprintCallable, Category = "HUD")
-    void UpdateUIOnDeath();
+    void UpdateScore(int32 Score);
 
-    // Zachowujemy Twoj� oryginaln� w�a�ciwo�� z Blueprint
+    UFUNCTION(BlueprintCallable, Category = "Game Over")
+    void ShowGameOverScreen(int32 FinalScore);
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")
-    TSubclassOf<class UUserWidget> HUDWidgetClass;
+    TSubclassOf<UUserWidget> HUDWidgetClass;
 
-    // Silnie typowany wska�nik do widgetu (wa�ne!)
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HUD")
     UWBP_PlayerHUD* HUDWidget;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Over")
+    TSubclassOf<UUserWidget> LooseScreenWidgetClass;
+
+private:
+    UPROPERTY()
+    UUserWidget* LooseScreenWidget = nullptr;
+
+    float GameplayTime = 0.0f; // ✅ CZAS ROZGRYWKI
 };

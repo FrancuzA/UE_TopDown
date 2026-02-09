@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -6,7 +6,6 @@
 #include "GameFramework/Actor.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
-#include "GameFramework/DamageType.h"
 #include "Projectile.generated.h"
 
 UCLASS()
@@ -36,7 +35,7 @@ protected:
     float Speed = 1000.0f;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
-    float Damage = 10.0f;
+    float Damage = 25.0f;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
     float LifeTime = 5.0f;
@@ -46,4 +45,9 @@ protected:
 private:
     UFUNCTION()
     void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+
+    UFUNCTION()
+    void OnOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+    bool bHasDealtDamage = false;
 };

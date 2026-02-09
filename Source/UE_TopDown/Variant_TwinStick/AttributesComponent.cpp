@@ -30,7 +30,7 @@ void UAttributesComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 void UAttributesComponent::SetHealth(float NewHealth)
 {
     float OldHealth = Health;
-    Health = FMath::Clamp(NewHealth, 0.0f, MaxHealth);
+    Health = FMath::Clamp(NewHealth, 0.0f, MaxHealth); // ✅ Clamp do MaxHealth
 
     if (!FMath::IsNearlyEqual(Health, OldHealth))
     {
@@ -43,6 +43,7 @@ void UAttributesComponent::SetHealth(float NewHealth)
     }
 }
 
+
 void UAttributesComponent::ApplyDamage(float Damage)
 {
     if (Damage > 0.0f)
@@ -54,7 +55,7 @@ void UAttributesComponent::ApplyDamage(float Damage)
 void UAttributesComponent::SetMana(float NewMana)
 {
     float OldMana = Mana;
-    Mana = FMath::Clamp(NewMana, 0.0f, MaxMana);
+    Mana = FMath::Clamp(NewMana, 0.0f, MaxMana); // ✅ Clamp do MaxMana
 
     if (!FMath::IsNearlyEqual(Mana, OldMana))
     {
