@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -58,6 +58,7 @@ public:
     virtual void PossessedBy(AController* NewController) override;
 
 protected:
+protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy")
     EEnemyType EnemyType = EEnemyType::Grunt;
 
@@ -71,10 +72,21 @@ protected:
     float ScoreValue = 10.0f;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Drop")
-    TSubclassOf<class AItem> ItemToDrop;
+    float DropChance = 0.7f; // ✅ DODANE
+
+    // ✅ BLUEPRINTY ITEMÓW DO DROPÓW:
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Drop")
+    TSubclassOf<AItem> HealthItemClass;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Drop")
-    float DropChance = 0.3f;
+    TSubclassOf<AItem> ManaItemClass;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Drop")
+    TSubclassOf<AItem> WeaponUpgradeItemClass;
+
+    // ✅ ULEPSZONY POCISK DLA BRONI:
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Drop")
+    TSubclassOf<AProjectile> UpgradeProjectileClass;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     USphereComponent* DetectionSphere;

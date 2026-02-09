@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "BasePlayerCharacter.h"
 #include "Components/CapsuleComponent.h"
+#include "Projectile.h"
 #include "Item.h"
 
 AEnemy::AEnemy()
@@ -82,7 +83,6 @@ void AEnemy::PossessedBy(AController* NewController)
         }
     }
 }
-
 void AEnemy::TakeDMG(float DamageAmount, AActor* DamageCauser)
 {
     if (bIsDead) return;
@@ -94,8 +94,6 @@ void AEnemy::TakeDMG(float DamageAmount, AActor* DamageCauser)
 
     if (CurrentHealth <= 0.1f && !bIsDead)
     {
-        bIsDead = true;
-
         // Nalicz punkty
         if (DamageCauser && DamageCauser->GetInstigatorController())
         {
@@ -107,16 +105,18 @@ void AEnemy::TakeDMG(float DamageAmount, AActor* DamageCauser)
             }
         }
 
-        // Drop itemu
-        if (FMath::FRand() < DropChance && ItemToDrop)
+        // ✅ DROP ITEMU ZANIM USTAWIMY bIsDead:
+        if (FMath::FRand() < DropChance)
         {
             DropItem();
-            UE_LOG(LogTemp, Warning, TEXT("✅ Dropped item: %s"), *ItemToDrop->GetName());
         }
 
+        // ✅ TERAZ USTAW bIsDead:
+        bIsDead = true;
         Destroy();
     }
 }
+
 
 void AEnemy::Attack()
 {
@@ -131,13 +131,67 @@ void AEnemy::Attack()
 
 void AEnemy::DropItem()
 {
-    if (bIsDead) return;
+    if (!GetWorld())
+    {
+        UE_LOG(LogTemp, Error, TEXT("DropItem: No world"));
+        return;
+    }
 
-    FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 50);
+    float Rand = FMath::FRand();
+    EItemType DropType;
+    TSubclassOf<AItem> ItemToSpawn = nullptr;
+    float HealthAmount = 0.0f;
+    float ManaAmount = 0.0f;
+    TSubclassOf<AProjectile> WeaponClass = nullptr;
+
+    if (Rand < 0.6f)
+    {
+        DropType = EItemType::Health;
+        ItemToSpawn = HealthItemClass;
+        HealthAmount = 25.0f;
+    }
+    else if (Rand < 0.9f)
+    {
+        DropType = EItemType::Mana;
+        ItemToSpawn = ManaItemClass;
+        ManaAmount = 30.0f;
+    }
+    else
+    {
+        DropType = EItemType::Weapon;
+        ItemToSpawn = WeaponUpgradeItemClass;
+        WeaponClass = UpgradeProjectileClass;
+    }
+
+    if (!ItemToSpawn)
+    {
+        UE_LOG(LogTemp, Error, TEXT("DropItem: ItemToSpawn is NULL! Check blueprint settings."));
+        return;
+    }
+
+    // ✅ POPRAWIONY SPAWN (50 zamiast 100):
+    FVector SpawnLocation = GetActorLocation() + FVector(0, 0, 30);
     FRotator SpawnRotation = FRotator::ZeroRotator;
 
     FActorSpawnParameters SpawnParams;
     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-    GetWorld()->SpawnActor<AItem>(ItemToDrop, SpawnLocation, SpawnRotation, SpawnParams);
+    AItem* DroppedItem = GetWorld()->SpawnActor<AItem>(ItemToSpawn, SpawnLocation, SpawnRotation, SpawnParams);
+
+    if (DroppedItem)
+    {
+        DroppedItem->ItemType = DropType;
+        DroppedItem->HealthAmount = HealthAmount;
+        DroppedItem->ManaAmount = ManaAmount;
+        DroppedItem->WeaponClass = WeaponClass;
+
+        UE_LOG(LogTemp, Log, TEXT("✅ SUCCESS: Dropped item %s at %s"),
+            *DroppedItem->GetName(),
+            *SpawnLocation.ToString());
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("❌ FAILED: SpawnActor returned NULL! Location: %s"),
+            *SpawnLocation.ToString());
+    }
 }
